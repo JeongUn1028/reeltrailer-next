@@ -1,15 +1,67 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 영화 데이터
+model Movie {
+  id            Int                      @id // TMDB Movie ID
+  title         String
+  originalTitle String?
+  overview      String?                  @db.Text
+  posterPath    String?
+  backdropPath  String?
+  releaseDate   DateTime?
+  voteAverage   Float                    @default(0.0)
+  voteCount     Int                      @default(0)
+  popularity    Float                    @default(0.0)
+  updatedAt     DateTime                 @updatedAt
+  createdAt     DateTime                 @default(now())
+
+  genres        MoviesOnGenres[]
+  providers     MoviesOnWatchProviders[]
+
+  @@index([popularity])
+  @@index([releaseDate])
+}
+
+// 장르 데이터
+model Genre {
+  id     Int              @id // TMDB Genre ID
+  name   String
+  movies MoviesOnGenres[]
+}
+
+// Movie <-> Genre 다대다 매핑
+model MoviesOnGenres {
+  movieId Int
+  genreId Int
+  movie   Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([movieId, genreId])
+}
+
+// OTT 서비스 제공자 (Netflix, Watcha 등)
+model WatchProvider {
+  id              Int                      @id // TMDB Provider ID
+  providerName    String
+  logoPath        String?
+  displayPriority Int                      @default(0)
+  movies          MoviesOnWatchProviders[]
+}
+
+// Movie <-> WatchProvider 다대다 매핑
+model MoviesOnWatchProviders {
+  movieId    Int
+  providerId Int
+  movie      Movie         @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  provider   WatchProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@id([movieId, providerId])
 }
