@@ -1,0 +1,10 @@
+<svg width="400" height="100" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="redgrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+<stop offset="0%" stop-color="#e50914"/>
+<stop offset="50%" stop-color="#b1060f"/>
+<stop offset="100%" stop-color="#8a050c"/>
+</linearGradient>
+</defs>
+<text x="200" y="65" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="48" letter-spacing="1.5" fill="url(#redgrad2)" style="font-stretch:condensed">REELTRAILER</text>
+</svg>
