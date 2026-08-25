@@ -1,0 +1,16 @@
+.layout {
+  width: 100%;
+  gap: 1rem;
+  margin-top: 1.75rem;
+  padding: 0 0 2rem;
+}
+
+.container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}

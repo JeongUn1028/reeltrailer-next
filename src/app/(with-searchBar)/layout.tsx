@@ -1,10 +1,13 @@
-import SearchBar from "../search/searchBar";
+import SearchBar from "../components/search/searchBar";
+import styles from "./layout.module.css";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div>
-      <SearchBar />
-      {children}
+    <div className={styles.layout}>
+      <div className={styles.container}>
+        <SearchBar />
+      </div>
+      <div className={styles.container}>{children}</div>
     </div>
   );
 }
