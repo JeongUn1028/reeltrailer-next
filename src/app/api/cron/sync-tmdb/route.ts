@@ -19,16 +19,24 @@ async function fetchTrailerKey(
   id: number,
 ): Promise<string | null> {
   const fetchVideos = async (lang: string) => {
-    const res = await fetch(
-      `${TMDB_BASE_URL}/${type}/${id}/videos?api_key=${TMDB_API_KEY}&language=${lang}`,
-      { cache: "no-store" },
-    );
-    if (!res.ok) {
-      console.error(`Failed to fetch ${type} videos for ID ${id} in ${lang}`);
+    try {
+      const res = await fetch(
+        `${TMDB_BASE_URL}/${type}/${id}/videos?api_key=${TMDB_API_KEY}&language=${lang}`,
+        { cache: "no-store" },
+      );
+      if (!res.ok) {
+        console.error(`Failed to fetch ${type} videos for ID ${id} in ${lang}`);
+        return [];
+      }
+      const data = await res.json();
+      return data.results || [];
+    } catch (error) {
+      console.error(
+        `Error fetching ${type} videos for ID ${id} in ${lang}:`,
+        error,
+      );
       return [];
     }
-    const data = await res.json();
-    return data.results || [];
   };
   // 1. 한국어 예고편 조회
   let videos = await fetchVideos("ko-KR");

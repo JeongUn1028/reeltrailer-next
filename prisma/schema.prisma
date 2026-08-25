@@ -18,7 +18,7 @@ model Movie {
   overview      String?                  @db.Text
   posterPath    String?
   backdropPath  String?
-  trailerKey    String?
+  trailerKey    String?                  
   releaseDate   DateTime?
   voteAverage   Float                    @default(0.0)
   voteCount     Int                      @default(0)
@@ -43,7 +43,7 @@ model TvShow {
   overview          String?     @db.Text
   posterPath        String?
   backdropPath      String?
-  trailerKey       String?
+  trailerKey       String?      
   firstAirDate      DateTime?
   voteAverage       Float       @default(0.0)
   voteCount         Int         @default(0)
