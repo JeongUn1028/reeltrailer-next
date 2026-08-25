@@ -10,10 +10,14 @@
 html,
 body {
   min-height: 100%;
+  overscroll-behavior-y: none;
 }
 
 body {
+  box-sizing: border-box;
   margin: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   background:
     radial-gradient(circle at top, rgba(229, 9, 20, 0.18), transparent 38%),
     linear-gradient(180deg, #0a0a0a 0%, #111111 100%);
