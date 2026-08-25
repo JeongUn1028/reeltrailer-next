@@ -1,0 +1,41 @@
+.carouselLayout {
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  margin-top: 1.75rem;
+  padding: 0 0 2rem;
+}
+
+.playerPane,
+.listPane {
+  display: flex;
+}
+
+.playerPane {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.listPane {
+  flex: 0 0 clamp(300px, 27vw, 360px);
+}
+
+.playerPane > :first-child,
+.listPane > :first-child {
+  width: 100%;
+}
+
+@media (max-width: 760px) {
+  .carouselLayout {
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 0.9rem;
+    padding: 0 0 1.6rem;
+  }
+
+  .listPane {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+}

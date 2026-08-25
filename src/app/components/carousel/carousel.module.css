@@ -1,0 +1,44 @@
+.heroSection {
+  position: relative;
+  display: flex;
+  height: 100%;
+  margin: 0;
+  padding: 0.9rem 0.8rem;
+}
+
+.heroGlow {
+  position: absolute;
+  inset: 0.25rem 0.6rem auto;
+  height: 16rem;
+  background: radial-gradient(
+    circle at 20% 40%,
+    rgba(229, 9, 20, 0.32),
+    transparent 60%
+  );
+  filter: blur(26px);
+  pointer-events: none;
+}
+
+.playerShell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  border-radius: 1.1rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 26px 44px rgba(0, 0, 0, 0.48);
+  background: #0f0f0f;
+}
+
+.playerFrame {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+@media (max-width: 760px) {
+  .heroSection {
+    margin-top: 0;
+    padding: 0.5rem 0.45rem 0.25rem;
+  }
+}
