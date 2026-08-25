@@ -14,6 +14,42 @@ const parseDate = (dateString: string): Date | null => {
   return isNaN(date.getTime()) ? null : date;
 };
 
+async function fetchTrailerKey(
+  type: "movie" | "tv",
+  id: number,
+): Promise<string | null> {
+  const fetchVideos = async (lang: string) => {
+    const res = await fetch(
+      `${TMDB_BASE_URL}/${type}/${id}/videos?api_key=${TMDB_API_KEY}&language=${lang}`,
+      { cache: "no-store" },
+    );
+    if (!res.ok) {
+      console.error(`Failed to fetch ${type} videos for ID ${id} in ${lang}`);
+      return [];
+    }
+    const data = await res.json();
+    return data.results || [];
+  };
+  // 1. 한국어 예고편 조회
+  let videos = await fetchVideos("ko-KR");
+  let trailer = videos.find(
+    (v: { site: string; type: string }) =>
+      v.site === "YouTube" && v.type === "Trailer",
+  );
+
+  // 2. 한국어 예고편이 없으면 영어 예고편 조회
+  if (!trailer) {
+    videos = await fetchVideos("en-US");
+    trailer = videos.find(
+      (v: { site: string; type: string }) =>
+        v.site === "YouTube" && v.type === "Trailer",
+    );
+  }
+
+  // 3. Official Trailer 우선, 없으면 첫 번째 YouTube 영상 선택
+  return trailer ? trailer.key : (videos[0]?.key ?? null);
+}
+
 interface TMDBMovie {
   id: number;
   title: string;
@@ -73,6 +109,7 @@ export async function GET(request: Request) {
     const movies: TMDBMovie[] = movieData.results;
 
     for (const movie of movies) {
+      const trailerKey = await fetchTrailerKey("movie", movie.id);
       // 3. Movie 데이터 Upsert
       await prisma.movie.upsert({
         where: { id: movie.id },
@@ -82,6 +119,7 @@ export async function GET(request: Request) {
           overview: movie.overview,
           posterPath: movie.poster_path,
           backdropPath: movie.backdrop_path,
+          trailerKey,
           releaseDate: parseDate(movie.release_date),
           voteAverage: movie.vote_average,
           voteCount: movie.vote_count,
@@ -94,6 +132,7 @@ export async function GET(request: Request) {
           overview: movie.overview,
           posterPath: movie.poster_path,
           backdropPath: movie.backdrop_path,
+          trailerKey,
           releaseDate: parseDate(movie.release_date),
           voteAverage: movie.vote_average,
           voteCount: movie.vote_count,
@@ -154,6 +193,7 @@ export async function GET(request: Request) {
       const tvShows: TMDBTVShow[] = tvData.results;
 
       for (const tvShow of tvShows) {
+        const trailerKey = await fetchTrailerKey("tv", tvShow.id);
         // 6. TV Show 데이터 Upsert
 
         await prisma.tvShow.upsert({
@@ -164,6 +204,7 @@ export async function GET(request: Request) {
             overview: tvShow.overview,
             posterPath: tvShow.poster_path,
             backdropPath: tvShow.backdrop_path,
+            trailerKey,
             firstAirDate: parseDate(tvShow.first_air_date),
             voteAverage: tvShow.vote_average,
             voteCount: tvShow.vote_count,
@@ -176,6 +217,7 @@ export async function GET(request: Request) {
             overview: tvShow.overview,
             posterPath: tvShow.poster_path,
             backdropPath: tvShow.backdrop_path,
+            trailerKey: trailerKey,
             firstAirDate: parseDate(tvShow.first_air_date),
             voteAverage: tvShow.vote_average,
             voteCount: tvShow.vote_count,
