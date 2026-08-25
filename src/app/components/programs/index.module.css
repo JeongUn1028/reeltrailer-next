@@ -1,0 +1,41 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.title {
+  position: relative;
+  display: inline-block;
+  font-size: clamp(1.05rem, 1vw + 0.8rem, 1.35rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #f8fafc;
+  line-height: 1.2;
+  padding-bottom: 0.45rem;
+  text-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.title::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 3.4rem;
+  height: 0.2rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e50914 0%, rgba(229, 9, 20, 0.2) 100%);
+}
+
+.programContainer {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  padding: 1rem 0;
+  gap: 2rem;
+}
