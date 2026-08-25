@@ -8,8 +8,9 @@ generator client {
   provider = "prisma-client-js"
   engineType = "library"
 }
-
-// 영화 데이터
+// -------------------------
+// 영화
+// -------------------------
 model Movie {
   id            Int                      @id // TMDB Movie ID
   title         String
@@ -30,6 +31,76 @@ model Movie {
   @@index([popularity])
   @@index([releaseDate])
 }
+// -------------------------
+// OTT 프로그램
+// -------------------------
+
+model TvShow {
+  id                Int         @id// TMDB TV ID
+  name              String
+  originalName      String?
+  overview          String?     @db.Text
+  posterPath        String?
+  backdropPath      String?
+  firstAirDate      DateTime?
+  voteAverage       Float       @default(0.0)
+  voteCount         Int         @default(0)
+  popularity        Float       @default(0.0)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  providers         TvShowsOnWatchProviders[]
+
+  @@index([popularity])
+  @@index([firstAirDate])
+}
+
+// -------------------------
+// OTT 서비스 제공자 (WatchProvider)
+// 넷플릭스, 디즈니+, 티빙, 웨이브, 왓챠 등
+// -------------------------
+
+model WatchProvider {
+  id              Int       @id // TMDB Provider ID (예: 8=Netflix)
+  providerName    String
+  logoPath        String?
+  displayPriority Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now())
+
+  movies          MoviesOnWatchProviders[]
+  tvShows         TvShowsOnWatchProviders[]
+}
+
+// -------------------------
+// N:M 관계 테이블 (Movie <-> WatchProvider)
+// -------------------------
+
+model MoviesOnWatchProviders {
+  movieId Int
+  providerId Int
+  movie Movie   @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  provider   WatchProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@id([movieId, providerId])
+  @@index([movieId])
+  @@index([providerId])
+}
+
+// -------------------------
+// N:M 관계 테이블 (TvShow <-> WatchProvider)
+// -------------------------
+model TvShowsOnWatchProviders {
+  tvShowId  Int
+  providerId Int
+  tvShow    TvShow        @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+  provider  WatchProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@id([tvShowId, providerId])
+  @@index([tvShowId])
+  @@index([providerId])
+}
+
 
 // 장르 데이터
 model Genre {
@@ -48,21 +119,3 @@ model MoviesOnGenres {
   @@id([movieId, genreId])
 }
 
-// OTT 서비스 제공자 (Netflix, Watcha 등)
-model WatchProvider {
-  id              Int                      @id // TMDB Provider ID
-  providerName    String
-  logoPath        String?
-  displayPriority Int                      @default(0)
-  movies          MoviesOnWatchProviders[]
-}
-
-// Movie <-> WatchProvider 다대다 매핑
-model MoviesOnWatchProviders {
-  movieId    Int
-  providerId Int
-  movie      Movie         @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  provider   WatchProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-
-  @@id([movieId, providerId])
-}
