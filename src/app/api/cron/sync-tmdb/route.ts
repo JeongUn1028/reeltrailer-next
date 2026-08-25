@@ -5,7 +5,7 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
 //* 주요 OTT Providers IDs (Netflix: 8, Disney+: 337, Watcha: 97, Wavve: 356, Tving: 1796)
-const OTT_PROVIDERS_IDS = "8|337|97|356|1796";
+const OTT_PROVIDER_IDS = "8|337|97|356|1796";
 
 // 날짜 유효성 검사 및 Date 객체 변환 헬퍼 함수
 const parseDate = (dateString: string): Date | null => {
@@ -110,13 +110,24 @@ export async function GET(request: Request) {
     //  TMDB 인기 영화 목록 Fetch
     // -----------------------------------------
     const moviesRes = await fetch(
-      `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&language=ko-KR&page=1`,
+      `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=ko-KR&watch_region=KR&with_watch_monetization_types=flatrate&with_watch_providers=${OTT_PROVIDER_IDS}&sort_by=popularity.desc&page=1`,
       { cache: "no-store" },
     );
     const movieData = await moviesRes.json();
     const movies: TMDBMovie[] = movieData.results;
 
     for (const movie of movies) {
+      const providerRes = await fetch(
+        `${TMDB_BASE_URL}/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`,
+        { cache: "no-store" },
+      );
+      const providerData = await providerRes.json();
+      const krProviders = providerData.results?.KR?.flatrate || [];
+
+      // ⭐️ 핵심 2: 한국 OTT 목록이 0개라면 Movie DB에 저장하지 않고 바로 패스합니다!
+      if (krProviders.length === 0) {
+        continue;
+      }
       const trailerKey = await fetchTrailerKey("movie", movie.id);
       // 3. Movie 데이터 Upsert
       await prisma.movie.upsert({
@@ -194,7 +205,7 @@ export async function GET(request: Request) {
       // -----------------------------------------
 
       const tvRes = await fetch(
-        `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&language=ko-KR&watch_region=KR&with_watch_monetization_types=flatrate&with_watch_providers=${OTT_PROVIDERS_IDS}&sort_by=popularity.desc&page=1`,
+        `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&language=ko-KR&watch_region=KR&with_watch_monetization_types=flatrate&with_watch_providers=${OTT_PROVIDER_IDS}&sort_by=popularity.desc&page=1`,
         { cache: "no-store" },
       );
       const tvData = await tvRes.json();
