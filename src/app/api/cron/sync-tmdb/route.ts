@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import prisma from "@/server/prisma";
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -46,7 +46,6 @@ interface TMDBTVShow {
   vote_count: number;
   popularity: number;
 }
-
 
 export async function GET(request: Request) {
   //* 1. Vercel Cron Security Key 검증

@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma from "@/server/prisma";
 import { Prisma } from "@prisma/client";
 
 export type MovieWithProviders = Prisma.MovieGetPayload<{
