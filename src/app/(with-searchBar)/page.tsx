@@ -10,7 +10,6 @@ export default async function Home() {
     throw new Error("Failed to fetch popular programs");
   }
   const popularProgramsData = await popularPrograms.json();
-  console.log(popularProgramsData);
 
   return (
     <div className={styles.container}>

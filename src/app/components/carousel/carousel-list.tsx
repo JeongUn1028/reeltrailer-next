@@ -1,42 +1,74 @@
 import Image from "next/image";
 import styles from "./carousel-list.module.css";
+import { Dispatch, SetStateAction } from "react";
+import type { ProgramType } from "@/app/types/types";
 
 type CarouselListProps = {
-  playList: string[];
+  programs: ProgramType[];
   selectedVideoId: string;
-  onSelectVideo: (videoId: string) => void;
+  onSelectVideo: Dispatch<SetStateAction<string>>;
 };
 
+function normalizeProviderName(providerName: string) {
+  const normalizedName = providerName.trim().toLowerCase();
+
+  if (
+    normalizedName === "netflix" ||
+    normalizedName === "netflix standard with ads"
+  ) {
+    return "Netflix";
+  }
+
+  return providerName;
+}
+
 export default function CarouselList({
-  playList,
+  programs,
   selectedVideoId,
   onSelectVideo,
 }: CarouselListProps) {
+  // console.log("CarouselList programs:", programs);
   return (
     <section className={styles.railSection} aria-label="Trailer carousel list">
       <h3 className={styles.railTitle}>추천하는 영상 목록</h3>
-      <p className={styles.railCount}>{playList.length} videos</p>
+      <p className={styles.railCount}>{programs.length} videos</p>
       <div className={styles.railTrack}>
-        {playList.map((videoId, index) => {
-          const isActive = selectedVideoId === videoId;
+        {programs.map((program) => {
+          console.log("Rendering program:", program.providers);
+          const isActive = selectedVideoId === program.trailerKey;
 
           return (
             <button
-              key={videoId}
+              key={program.trailerKey}
               type="button"
               className={`${styles.cardButton} ${isActive ? styles.cardActive : ""}`}
-              onClick={() => onSelectVideo(videoId)}
+              onClick={() => {
+                if (program.trailerKey) {
+                  onSelectVideo(program.trailerKey);
+                }
+              }}
               aria-pressed={isActive}
             >
               <Image
-                src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
-                alt={`Trailer ${index + 1}`}
+                src={`https://i.ytimg.com/vi/${program.trailerKey}/hqdefault.jpg`}
+                alt={`Trailer ${program.title}`}
                 className={styles.thumbnail}
                 width={480}
                 height={270}
-                loading="lazy"
+                loading="eager"
               />
-              <span className={styles.cardMeta}>Episode {index + 1}</span>
+              <div className={styles.cardInfo}>
+                <span className={styles.cardMeta}>{program.title}</span>
+                <span className={styles.cardMeta}>
+                  {Array.from(
+                    new Set(
+                      program.providers.map((provider) =>
+                        normalizeProviderName(provider.provider.providerName),
+                      ),
+                    ),
+                  ).join(", ")}
+                </span>
+              </div>
             </button>
           );
         })}

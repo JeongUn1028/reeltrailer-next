@@ -1,3 +1,17 @@
+export interface ProviderDetails {
+  createdAt: string;
+  displayPriority: number;
+  id: number;
+  logoPath: string;
+  providerName: string;
+  updatedAt: string;
+}
+export interface Provider {
+  movieId: number;
+  providerId: number;
+  provider: ProviderDetails;
+}
+
 export interface ProgramType {
   id: number;
   title: string;
@@ -9,4 +23,5 @@ export interface ProgramType {
   releaseDate: string;
   voteAverage: number;
   popularity: number;
+  providers: Provider[];
 }
