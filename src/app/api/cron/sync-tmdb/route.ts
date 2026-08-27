@@ -7,13 +7,69 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 //* 주요 OTT Providers IDs (Netflix: 8, Disney+: 337, Watcha: 97, Wavve: 356, Tving: 1796)
 const OTT_PROVIDER_IDS = "8|337|97|356|1796";
 
-// 날짜 유효성 검사 및 Date 객체 변환 헬퍼 함수
+//* 날짜 유효성 검사 및 Date 객체 변환 헬퍼 함수
 const parseDate = (dateString: string): Date | null => {
   if (!dateString) return null;
   const date = new Date(dateString);
   return isNaN(date.getTime()) ? null : date;
 };
 
+//* TMDB에서 장르를 가져오는 헬퍼 함수
+export async function syncGenres() {
+  try {
+    // 1. TMDB 영화 & TV 장르 목록 병렬 요청 (한국어 기준)
+    const [movieGenresRes, tvGenresRes] = await Promise.all([
+      fetch(
+        `${TMDB_BASE_URL}/genre/movie/list?language=ko-KR&api_key=${TMDB_API_KEY}`,
+        { next: { revalidate: 86400 } }, // 24시간 캐싱 (선택 사항)
+      ),
+      fetch(
+        `${TMDB_BASE_URL}/genre/tv/list?language=ko-KR&api_key=${TMDB_API_KEY}`,
+        { next: { revalidate: 86400 } },
+      ),
+    ]);
+
+    if (!movieGenresRes.ok || !tvGenresRes.ok) {
+      throw new Error("TMDB 장르 API 요청에 실패했습니다.");
+    }
+
+    const movieGenresData: TmdbGenreResponse = await movieGenresRes.json();
+    const tvGenresData: TmdbGenreResponse = await tvGenresRes.json();
+
+    // 2. 영화와 TV 장르 배열 합치기 및 ID 기준 중복 제거
+    const genreMap = new Map<number, string>();
+
+    [...movieGenresData.genres, ...tvGenresData.genres].forEach((genre) => {
+      genreMap.set(genre.id, genre.name);
+    });
+
+    const allGenres = Array.from(genreMap.entries()).map(([id, name]) => ({
+      id,
+      name,
+    }));
+
+    // 3. Prisma 병렬 upsert로 DB에 저장 및 업데이트
+    const upsertPromises = allGenres.map((genre) =>
+      prisma.genre.upsert({
+        where: { id: genre.id },
+        update: { name: genre.name },
+        create: {
+          id: genre.id,
+          name: genre.name,
+        },
+      }),
+    );
+
+    await Promise.all(upsertPromises);
+
+    return { success: true, count: allGenres.length };
+  } catch (error) {
+    console.error("❌ syncGenres 에러:", error);
+    throw error;
+  }
+}
+
+//* TMDB에서 예고편 키를 가져오는 헬퍼 함수
 async function fetchTrailerKey(
   type: "movie" | "tv",
   id: number,
@@ -69,13 +125,7 @@ interface TMDBMovie {
   vote_average: number;
   vote_count: number;
   popularity: number;
-}
-
-interface TMDBProvider {
-  provider_name: string;
-  provider_id: number;
-  logo_path: string | null;
-  display_priority: number;
+  genre_ids: number[]; // TMDB에서 제공하는 장르 ID 배열
 }
 
 interface TMDBTVShow {
@@ -89,6 +139,23 @@ interface TMDBTVShow {
   vote_average: number;
   vote_count: number;
   popularity: number;
+  genre_ids: number[]; // TMDB에서 제공하는 장르 ID 배열
+}
+
+interface TMDBProvider {
+  provider_name: string;
+  provider_id: number;
+  logo_path: string | null;
+  display_priority: number;
+}
+
+interface TmdbGenre {
+  id: number;
+  name: string;
+}
+
+interface TmdbGenreResponse {
+  genres: TmdbGenre[];
 }
 
 export async function GET(request: Request) {
@@ -143,6 +210,12 @@ export async function GET(request: Request) {
           voteAverage: movie.vote_average,
           voteCount: movie.vote_count,
           popularity: movie.popularity,
+          genres: {
+            deleteMany: {}, // 기존 장르 관계 삭제
+            create: movie.genre_ids.map((genreId: number) => ({
+              genre: { connect: { id: genreId } },
+            })),
+          },
         },
         create: {
           id: movie.id,
@@ -156,6 +229,11 @@ export async function GET(request: Request) {
           voteAverage: movie.vote_average,
           voteCount: movie.vote_count,
           popularity: movie.popularity,
+          genres: {
+            create: movie.genre_ids.map((genreId: number) => ({
+              genre: { connect: { id: genreId } },
+            })),
+          },
         },
       });
 
@@ -228,6 +306,12 @@ export async function GET(request: Request) {
             voteAverage: tvShow.vote_average,
             voteCount: tvShow.vote_count,
             popularity: tvShow.popularity,
+            genres: {
+              deleteMany: {}, // 기존 장르 관계 삭제
+              create: tvShow.genre_ids.map((genreId: number) => ({
+                genre: { connect: { id: genreId } },
+              })),
+            },
           },
           create: {
             id: tvShow.id,
@@ -241,6 +325,11 @@ export async function GET(request: Request) {
             voteAverage: tvShow.vote_average,
             voteCount: tvShow.vote_count,
             popularity: tvShow.popularity,
+            genres: {
+              create: tvShow.genre_ids.map((genreId: number) => ({
+                genre: { connect: { id: genreId } },
+              })),
+            },
           },
         });
 

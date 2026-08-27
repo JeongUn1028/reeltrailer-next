@@ -12,6 +12,10 @@ export interface Provider {
   provider: ProviderDetails;
 }
 
+export interface Genre {
+  id: number;
+  name: string;
+}
 export interface ProgramType {
   id: number;
   title: string;
@@ -24,4 +28,5 @@ export interface ProgramType {
   voteAverage: number;
   popularity: number;
   providers: Provider[];
+  genres: Genre[];
 }

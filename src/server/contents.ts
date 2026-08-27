@@ -44,6 +44,11 @@ export async function getMovies({
           provider: true,
         },
       },
+      genres: {
+        include: {
+          genre: true,
+        },
+      },
     },
     orderBy: {
       popularity: "desc",
@@ -69,6 +74,11 @@ export async function getTVShows({
           provider: true,
         },
       },
+      genres: {
+        include: {
+          genre: true,
+        },
+      },
     },
     orderBy: {
       popularity: "desc",
@@ -91,6 +101,11 @@ export async function getMovieById(
           provider: true,
         },
       },
+      genres: {
+        include: {
+          genre: true,
+        },
+      },
     },
   });
   return movie;
@@ -106,6 +121,11 @@ export async function getTVShowById(
       providers: {
         include: {
           provider: true,
+        },
+      },
+      genres: {
+        include: {
+          genre: true,
         },
       },
     },
@@ -133,6 +153,11 @@ export async function searchPrograms(query: string) {
           include: {
             provider: true,
           },
+          genres: {
+            include: {
+              genre: true,
+            },
+          },
         },
       },
       orderBy: {
@@ -151,6 +176,11 @@ export async function searchPrograms(query: string) {
         providers: {
           include: {
             provider: true,
+          },
+          genres: {
+            include: {
+              genre: true,
+            },
           },
         },
       },

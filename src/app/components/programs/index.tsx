@@ -3,7 +3,6 @@ import styles from "./index.module.css";
 import type { ProgramType } from "@/app/types/types";
 
 export default function Programs({ programs }: { programs: ProgramType[] }) {
-  console.log("Programs Component Received Programs:", programs);
   return (
     <div className={styles.container}>
       <div>

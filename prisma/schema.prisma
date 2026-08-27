@@ -51,6 +51,7 @@ model TvShow {
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
+  genres            TvShowsOnGenres[]
   providers         TvShowsOnWatchProviders[]
 
   @@index([popularity])
@@ -109,6 +110,7 @@ model Genre {
   id     Int              @id // TMDB Genre ID
   name   String
   movies MoviesOnGenres[]
+  tvShows TvShowsOnGenres[]
 }
 
 // Movie <-> Genre 다대다 매핑
@@ -119,5 +121,15 @@ model MoviesOnGenres {
   genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
 
   @@id([movieId, genreId])
+}
+
+// TvShow <-> Genre 다대다 매핑
+model TvShowsOnGenres {
+  tvShowId Int
+  genreId  Int
+  tvShow   TvShow @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+  genre    Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([tvShowId, genreId])
 }
 

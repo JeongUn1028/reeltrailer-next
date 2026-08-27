@@ -6,7 +6,6 @@ async function SearchResults({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  console.log("Search Query from Params:", q);
 
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/search?q=${q}`,
