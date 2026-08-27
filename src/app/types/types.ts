@@ -20,7 +20,7 @@ export interface ProgramType {
   posterPath: string | null;
   backdropPath: string | null;
   trailerKey?: string;
-  releaseDate: string;
+  firstAirDate: string;
   voteAverage: number;
   popularity: number;
   providers: Provider[];

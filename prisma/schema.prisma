@@ -38,12 +38,12 @@ model Movie {
 
 model TvShow {
   id                Int         @id// TMDB TV ID
-  name              String
-  originalName      String?
+  title             String
+  originalTitle     String?
   overview          String?     @db.Text
   posterPath        String?
   backdropPath      String?
-  trailerKey       String?      
+  trailerKey        String?      
   firstAirDate      DateTime?
   voteAverage       Float       @default(0.0)
   voteCount         Int         @default(0)

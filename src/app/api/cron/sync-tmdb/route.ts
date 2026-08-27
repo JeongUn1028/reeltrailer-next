@@ -218,8 +218,8 @@ export async function GET(request: Request) {
         await prisma.tvShow.upsert({
           where: { id: tvShow.id },
           update: {
-            name: tvShow.name,
-            originalName: tvShow.original_name,
+            title: tvShow.name,
+            originalTitle: tvShow.original_name,
             overview: tvShow.overview,
             posterPath: tvShow.poster_path,
             backdropPath: tvShow.backdrop_path,
@@ -231,8 +231,8 @@ export async function GET(request: Request) {
           },
           create: {
             id: tvShow.id,
-            name: tvShow.name,
-            originalName: tvShow.original_name,
+            title: tvShow.name,
+            originalTitle: tvShow.original_name,
             overview: tvShow.overview,
             posterPath: tvShow.poster_path,
             backdropPath: tvShow.backdrop_path,

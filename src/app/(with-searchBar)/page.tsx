@@ -4,7 +4,7 @@ import styles from "./page.module.css";
 
 export default async function Home() {
   const popularPrograms = await fetch(
-    `${process.env.NEXT_PUBLIC_URL}/api/getMovie?page=1&limit=20`,
+    `${process.env.NEXT_PUBLIC_API_URL}/getMovies?page=1&limit=20`,
   );
   if (!popularPrograms.ok) {
     throw new Error("Failed to fetch popular programs");
@@ -14,7 +14,7 @@ export default async function Home() {
   return (
     <div className={styles.container}>
       <CarouselContainer />
-      <Programs movies={popularProgramsData.movies} />
+      <Programs programs={popularProgramsData.movies} />
     </div>
   );
 }

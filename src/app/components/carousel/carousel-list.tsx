@@ -27,14 +27,12 @@ export default function CarouselList({
   selectedVideoId,
   onSelectVideo,
 }: CarouselListProps) {
-  // console.log("CarouselList programs:", programs);
   return (
     <section className={styles.railSection} aria-label="Trailer carousel list">
       <h3 className={styles.railTitle}>추천하는 영상 목록</h3>
       <p className={styles.railCount}>{programs.length} videos</p>
       <div className={styles.railTrack}>
         {programs.map((program) => {
-          console.log("Rendering program:", program.providers);
           const isActive = selectedVideoId === program.trailerKey;
 
           return (
