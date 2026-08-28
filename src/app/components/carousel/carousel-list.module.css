@@ -12,6 +12,8 @@
     rgba(12, 12, 12, 0.95)
   );
   box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .railTitle {
@@ -31,12 +33,42 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.7rem;
+  height: 36rem;
   max-height: 36rem;
-  min-height: 0;
+  min-height: 36rem;
   overflow-y: auto;
-  padding-right: 0.2rem;
+  padding: 0.2rem 0.35rem 0.35rem 0.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.7rem;
+  background: rgba(0, 0, 0, 0.18);
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scroll-padding-block: 0.2rem;
   scrollbar-width: thin;
+  scrollbar-color: rgba(229, 9, 20, 0.9) rgba(255, 255, 255, 0.1);
+  scrollbar-gutter: stable;
+}
+
+.railTrack::-webkit-scrollbar {
+  width: 0.25rem;
+}
+
+.railTrack::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.railTrack::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: #e50914;
+  background-clip: padding-box;
+}
+
+.railTrack::-webkit-scrollbar-thumb:hover {
+  background: #ff3340;
+  background-clip: padding-box;
 }
 
 .cardButton {
@@ -53,6 +85,7 @@
   cursor: pointer;
   overflow: hidden;
   display: grid;
+  flex: 0 0 auto;
   grid-template-columns: 132px minmax(0, 1fr);
   align-items: center;
   transform: scale(1);
@@ -74,7 +107,7 @@
 }
 
 .cardActive {
-  border-color: rgba(229, 9, 20, 1);
+  border-color: rgba(229, 9, 20, 0.85);
   box-shadow:
     0 0 0 1px rgba(229, 9, 20, 0.5),
     0 10px 22px rgba(0, 0, 0, 0.55);
@@ -86,6 +119,13 @@
   height: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
+}
+
+.cardInfo {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
 .cardMeta {
@@ -103,7 +143,9 @@
   }
 
   .railTrack {
-    max-height: 20rem;
+    height: 22rem;
+    max-height: 22rem;
+    min-height: 22rem;
   }
 
   .cardButton {

@@ -1,21 +1,12 @@
 import CarouselContainer from "../components/carousel";
-import Programs from "../components/programs";
 import styles from "./page.module.css";
+import RecommendSection from "../components/programs/recommendSection";
 
 export default async function Home() {
-  const popularPrograms = await fetch(
-    `${process.env.NEXT_PUBLIC_URL}/api/getMovie?page=1&limit=20`,
-  );
-  if (!popularPrograms.ok) {
-    throw new Error("Failed to fetch popular programs");
-  }
-  const popularProgramsData = await popularPrograms.json();
-  console.log(popularProgramsData);
-
   return (
     <div className={styles.container}>
       <CarouselContainer />
-      <Programs movies={popularProgramsData.movies} />
+      <RecommendSection />
     </div>
   );
 }
