@@ -1,15 +1,9 @@
-export interface ProviderDetails {
-  createdAt: string;
-  displayPriority: number;
-  id: number;
-  logoPath: string;
-  providerName: string;
-  updatedAt: string;
-}
 export interface Provider {
-  movieId: number;
-  providerId: number;
-  provider: ProviderDetails;
+  id: number;
+  providerId?: number; // ⭐️ 필수에서 선택적(?), 또는 삭제
+  providerName: string;
+  logoPath: string | null;
+  displayPriority?: number;
 }
 
 export interface GenreDetails {
@@ -20,7 +14,7 @@ export interface GenreDetails {
 export interface Genre {
   id: number;
   name: string;
-  genre: GenreDetails;
+  genre?: GenreDetails;
 }
 
 export type ProgramMediaType = "movie" | "tvshow";
@@ -29,15 +23,20 @@ export interface ProgramType {
   id: number;
   mediaType?: ProgramMediaType;
   title: string;
-  originalTitle: string;
-  overview: string;
+  originalTitle: string | null;
+  overview: string | null;
   posterPath: string | null;
   backdropPath: string | null;
-  trailerKey?: string;
-  releaseDate?: string;
-  firstAirDate?: string;
+  trailerKey?: string | null;
+  releaseDate?: Date | null | undefined;
+  firstAirDate?: Date | null;
   voteAverage: number;
   popularity: number;
   providers: Provider[];
   genres: Genre[];
+}
+
+export interface ProgramsByGenre {
+  movies: ProgramType[];
+  tvShows: ProgramType[];
 }

@@ -2,25 +2,13 @@ import Image from "next/image";
 import styles from "./carousel-list.module.css";
 import { Dispatch, SetStateAction } from "react";
 import type { ProgramType } from "@/app/types/types";
+import { normalizeProviderName } from "@/app/lib/normalizeProviderName";
 
 type CarouselListProps = {
   programs: ProgramType[];
   selectedVideoId: string;
   onSelectVideo: Dispatch<SetStateAction<string>>;
 };
-
-function normalizeProviderName(providerName: string) {
-  const normalizedName = providerName.trim().toLowerCase();
-
-  if (
-    normalizedName === "netflix" ||
-    normalizedName === "netflix standard with ads"
-  ) {
-    return "Netflix";
-  }
-
-  return providerName;
-}
 
 export default function CarouselList({
   programs,
@@ -61,7 +49,7 @@ export default function CarouselList({
                   {Array.from(
                     new Set(
                       program.providers.map((provider) =>
-                        normalizeProviderName(provider.provider.providerName),
+                        normalizeProviderName(provider.providerName),
                       ),
                     ),
                   ).join(", ")}

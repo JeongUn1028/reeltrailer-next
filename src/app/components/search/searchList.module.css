@@ -1,0 +1,104 @@
+.page {
+  width: 100%;
+  padding: 2.5rem 1.5rem 4rem;
+}
+
+.container {
+  width: min(100%, 72rem);
+  min-height: 28rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.75rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 32%),
+    rgba(17, 17, 17, 0.82);
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.24);
+}
+
+.header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.eyebrow {
+  margin: 0 0 0.45rem;
+  color: #e50914;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.header h1 {
+  margin: 0;
+  color: #f8f8f8;
+  font-size: clamp(1.3rem, 2vw, 1.85rem);
+  line-height: 1.2;
+}
+
+.count {
+  flex-shrink: 0;
+  color: #a8a8a8;
+  font-size: 0.8rem;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 3rem 1.25rem;
+  justify-items: center;
+  padding: 1.75rem 0 0.5rem;
+}
+
+.list > a {
+  min-width: 0;
+  width: 100%;
+  max-width: 12.5rem;
+}
+
+.list > a > div {
+  width: 100%;
+  height: auto;
+}
+
+.empty {
+  display: grid;
+  min-height: 18rem;
+  place-items: center;
+  color: #999;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 1.25rem 0.5rem 2.5rem;
+  }
+
+  .container {
+    min-height: 24rem;
+    padding: 1.25rem 1rem 1.5rem;
+    border-radius: 0.6rem;
+  }
+
+  .header {
+    align-items: start;
+  }
+
+  .header h1 {
+    font-size: 1.25rem;
+  }
+
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem 0.75rem;
+    padding-top: 1.25rem;
+  }
+
+  .list > a {
+    max-width: 10rem;
+  }
+}

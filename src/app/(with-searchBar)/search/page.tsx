@@ -1,29 +1,5 @@
-//TODO logic 분리 필요
-
-import Programs from "@/app/components/programs";
-
-async function SearchResults({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
-  const { q } = await searchParams;
-
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/search?q=${q}`,
-  );
-  if (!response.ok) {
-    console.error("Search API request failed with status:", response.status);
-    throw new Error(`search API 요청 실패`);
-  }
-  const { programs } = await response.json();
-  console.log("Search results:", programs);
-  return (
-    <>
-      <Programs programs={programs} />
-    </>
-  );
-}
+import SearchResults from "@/app/components/search/searchList";
+import { Suspense } from "react";
 
 export default function Page({
   searchParams,
@@ -31,8 +7,8 @@ export default function Page({
   searchParams: Promise<{ q?: string }>;
 }) {
   return (
-    <div>
+    <Suspense fallback={<div>Loading...</div>}>
       <SearchResults searchParams={searchParams} />
-    </div>
+    </Suspense>
   );
 }

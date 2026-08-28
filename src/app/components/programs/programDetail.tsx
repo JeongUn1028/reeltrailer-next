@@ -1,5 +1,7 @@
 import Image from "next/image";
+import { notFound } from "next/navigation";
 import type { ProgramType } from "@/app/types/types";
+import { normalizeProviderName } from "@/app/lib/normalizeProviderName";
 import styles from "./programDetail.module.css";
 
 export default async function ProgramDetail({
@@ -9,10 +11,21 @@ export default async function ProgramDetail({
   programId: string;
   kind?: string;
 }) {
+  if (
+    !/^[1-9]\d*$/.test(programId) ||
+    !["movie", "tvshow"].includes(kind ?? "")
+  ) {
+    notFound();
+  }
+
   const program = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/getProgramById?id=${programId}&kind=${kind}`,
   );
   if (!program.ok) {
+    if (program.status === 404) {
+      notFound();
+    }
+
     throw new Error(`Failed to fetch program: ${program.status}`);
   }
 
@@ -21,15 +34,16 @@ export default async function ProgramDetail({
   const date = programData.releaseDate ?? programData.firstAirDate;
   const releaseYear = date ? new Date(date).getFullYear() : null;
   const providers = programData.providers
-    .map((provider) => provider.provider.providerName)
+    .map((provider) => provider.providerName)
     .filter(Boolean);
 
   const posterSrc = programData.posterPath
     ? `https://image.tmdb.org/t/p/w780${programData.posterPath}`
     : null;
-    
-  const genreDetails = programData.genres.map((genre) => genre.genre);
-  const genreNames = genreDetails.map((genre) => genre.name).filter(Boolean);
+
+  const genreDetails = programData.genres.map((genre) => genre.genre?.name);
+  const normalizedProviders = providers.map(normalizeProviderName);
+
   return (
     <article className={styles.detail}>
       <div className={styles.hero}>
@@ -62,8 +76,8 @@ export default async function ProgramDetail({
               {programData.voteAverage.toFixed(1)}
             </span>
             {releaseYear && <span>{releaseYear}</span>}
-            {genreNames.length > 0 && (
-              <span>{genreNames.slice(0, 2).join(" · ")}</span>
+            {genreDetails.length > 0 && (
+              <span>{genreDetails.slice(0, 2).join(" · ")}</span>
             )}
           </div>
         </div>
@@ -81,13 +95,13 @@ export default async function ProgramDetail({
           <section>
             <p className={styles.sectionLabel}>GENRES</p>
             <p className={styles.infoValue}>
-              {genreNames.join(" · ") || "정보 없음"}
+              {genreDetails.join(" · ") || "정보 없음"}
             </p>
           </section>
           <section>
             <p className={styles.sectionLabel}>WATCH ON</p>
             <p className={styles.infoValue}>
-              {providers.join(" · ") || "정보 없음"}
+              {normalizedProviders.join(" · ") || "정보 없음"}
             </p>
           </section>
         </div>

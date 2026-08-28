@@ -1,3 +1,4 @@
+import { ProgramType } from "@/app/types/types";
 import prisma from "@/server/prisma";
 import { Prisma } from "@prisma/client";
 
@@ -8,6 +9,11 @@ export type MovieWithProviders = Prisma.MovieGetPayload<{
     providers: {
       include: {
         provider: true;
+      };
+    };
+    genres: {
+      include: {
+        genre: true;
       };
     };
   };
@@ -34,7 +40,7 @@ export async function getMovies({
   providerId,
   limit = 20,
   page = 1,
-}: GetContentsParams = {}): Promise<MovieWithProviders[]> {
+}: GetContentsParams = {}): Promise<ProgramType[]> {
   const skip = (page - 1) * limit;
 
   const movies = await prisma.movie.findMany({
@@ -58,7 +64,12 @@ export async function getMovies({
     take: limit,
     skip,
   });
-  return movies;
+  return movies.map((movie) => ({
+    ...movie,
+    mediaType: "movie" as const,
+    providers: movie.providers.map((p) => p.provider),
+    genres: movie.genres.map((g) => g.genre),
+  }));
 }
 
 //* TV 프로그램 목록 조회
@@ -66,7 +77,7 @@ export async function getTvShows({
   providerId,
   limit = 20,
   page = 1,
-}: GetContentsParams = {}): Promise<TVShowWithProviders[]> {
+}: GetContentsParams = {}): Promise<ProgramType[]> {
   const skip = (page - 1) * limit;
   const tvShows = await prisma.tvShow.findMany({
     where: providerId ? { providers: { some: { providerId } } } : {},
@@ -89,7 +100,12 @@ export async function getTvShows({
     take: limit,
     skip,
   });
-  return tvShows;
+  return tvShows.map((tvShow) => ({
+    ...tvShow,
+    mediaType: "tvshow" as const,
+    providers: tvShow.providers.map((p) => p.provider),
+    genres: tvShow.genres.map((g) => g.genre),
+  }));
 }
 
 //* 특정 영화 상세 조회
@@ -140,7 +156,7 @@ export async function getTvShowById(
 export async function searchPrograms(query: string) {
   //* 검색어가 없거나 공백인 경우
   if (!query || query.trim() === "") {
-    return { programs: [] };
+    return [];
   }
 
   const [movies, tvShows] = await Promise.all([
@@ -156,10 +172,10 @@ export async function searchPrograms(query: string) {
           include: {
             provider: true,
           },
-          genres: {
-            include: {
-              genre: true,
-            },
+        },
+        genres: {
+          include: {
+            genre: true,
           },
         },
       },
@@ -180,10 +196,10 @@ export async function searchPrograms(query: string) {
           include: {
             provider: true,
           },
-          genres: {
-            include: {
-              genre: true,
-            },
+        },
+        genres: {
+          include: {
+            genre: true,
           },
         },
       },
@@ -193,8 +209,22 @@ export async function searchPrograms(query: string) {
       take: 20,
     }),
   ]);
-  const programs = [...movies, ...tvShows];
-  return { programs };
+  const formattedMovies = movies.map((movie) => ({
+    ...movie,
+    mediaType: "movie" as const,
+    genres: movie.genres?.map((g) => g.genre) || [],
+    providers: movie.providers?.map((p) => p.provider) || [],
+  }));
+
+  const formattedTvShows = tvShows.map((tvShow) => ({
+    ...tvShow,
+    mediaType: "tvshow" as const,
+    genres: tvShow.genres?.map((g) => g.genre) || [],
+    providers: tvShow.providers?.map((p) => p.provider) || [],
+  }));
+
+  const programs = [...formattedMovies, ...formattedTvShows];
+  return programs;
 }
 
 //* 장르 별 영화 및 TV 프로그램 조회
@@ -238,7 +268,7 @@ export async function getProgramsByGenre({
   const formattedProviderIds = normalizeArray(providerIds);
 
   if (formattedGenreIds.length === 0) {
-    return { programs: [], totalCount: 0 };
+    return { movies: [], tvShows: [] };
   }
 
   // 3. Movie 동적 Where 조건 생성
@@ -318,8 +348,5 @@ export async function getProgramsByGenre({
       .slice(0, limit),
   };
 
-  return {
-    programs,
-    totalCount: programs.movies.length + programs.tvShows.length,
-  };
+  return programs;
 }
