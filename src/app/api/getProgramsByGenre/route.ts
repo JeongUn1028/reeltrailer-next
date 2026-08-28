@@ -28,9 +28,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log(`Fetching programs for genre: ${genreParam}`);
     const genreIds = genres.find((genre) => genre.name === genreParam)?.id;
-    console.log(`Resolved genre IDs for ${genreParam}: ${genreIds}`);
+
     if (!genreIds) {
       return NextResponse.json(
         { message: "유효한 장르명을 입력해 주세요." },

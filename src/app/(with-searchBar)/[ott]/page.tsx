@@ -3,8 +3,6 @@ import CarouselContainer from "../../components/carousel";
 import RecommendSection from "../../components/programs/recommendSection";
 import providerIds from "@/config/ott-provider-ids.json";
 
-//TODO: Add OTT Programs
-//TODO: Add All genres
 //* 추천하는 00 이 영역을 분리 하고,
 
 export default async function Home({

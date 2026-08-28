@@ -115,7 +115,7 @@ export async function getMovieById(
 }
 
 //* 특정 TV 프로그램 상세 조회
-export async function getTVShowById(
+export async function getTvShowById(
   id: number,
 ): Promise<TVShowWithProviders | null> {
   const tvShow = await prisma.tvShow.findUnique({
@@ -306,15 +306,20 @@ export async function getProgramsByGenre({
     }));
 
   // 7. 통합 후 인기순 정렬 및 최종 limit 자르기
-  const combinedPrograms = [
-    ...formatRelations(movies),
-    ...formatRelations(tvShows),
-  ].sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
 
-  const programs = combinedPrograms.slice(0, limit);
+  const programs = {
+    movies: formatRelations(movies)
+      .map((movie) => ({ ...movie, mediaType: "movie" as const }))
+      .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))
+      .slice(0, limit),
+    tvShows: formatRelations(tvShows)
+      .map((tvShow) => ({ ...tvShow, mediaType: "tvshow" as const }))
+      .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))
+      .slice(0, limit),
+  };
 
   return {
     programs,
-    totalCount: programs.length,
+    totalCount: programs.movies.length + programs.tvShows.length,
   };
 }

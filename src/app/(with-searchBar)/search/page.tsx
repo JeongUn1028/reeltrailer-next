@@ -1,3 +1,5 @@
+//TODO logic 분리 필요
+
 import Programs from "@/app/components/programs";
 
 async function SearchResults({
@@ -15,6 +17,7 @@ async function SearchResults({
     throw new Error(`search API 요청 실패`);
   }
   const { programs } = await response.json();
+  console.log("Search results:", programs);
   return (
     <>
       <Programs programs={programs} />

@@ -12,19 +12,30 @@ export interface Provider {
   provider: ProviderDetails;
 }
 
-export interface Genre {
+export interface GenreDetails {
   id: number;
   name: string;
 }
+
+export interface Genre {
+  id: number;
+  name: string;
+  genre: GenreDetails;
+}
+
+export type ProgramMediaType = "movie" | "tvshow";
+
 export interface ProgramType {
   id: number;
+  mediaType?: ProgramMediaType;
   title: string;
   originalTitle: string;
   overview: string;
   posterPath: string | null;
   backdropPath: string | null;
   trailerKey?: string;
-  firstAirDate: string;
+  releaseDate?: string;
+  firstAirDate?: string;
   voteAverage: number;
   popularity: number;
   providers: Provider[];

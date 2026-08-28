@@ -1,4 +1,4 @@
-//TODO login 분리 필요
+//TODO logic 분리 필요
 
 import Program from "./program";
 import styles from "./index.module.css";
@@ -37,11 +37,11 @@ export default async function Programs({
       `${process.env.NEXT_PUBLIC_API_URL}/getProgramsByGenre?genre=${encodeURIComponent(title)}&page=1&limit=20${providerQuery}`,
     );
     if (!genrePrograms.ok) {
-      console.log(`Failed to fetch programs for genre: ${title}`);
       throw new Error(`Failed to fetch programs for genre: ${title}`);
     }
     const genreProgramsJson = await genrePrograms.json();
-    programs = genreProgramsJson.programs;
+    const genreProgramsData = genreProgramsJson.programs;
+    programs = genreProgramsData.movies.concat(genreProgramsData.tvShows);
   }
 
   if (programs.length === 0) {
@@ -60,7 +60,7 @@ export default async function Programs({
       </div>
       <div className={styles.programContainer}>
         {programs.map((program) => (
-          <Program key={program.id} props={program} />
+          <Program key={program.id} props={program} title={title} />
         ))}
       </div>
     </div>
