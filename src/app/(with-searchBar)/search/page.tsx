@@ -1,4 +1,5 @@
 import SearchResults from "@/app/components/search/searchList";
+import ProgramsSkeleton from "@/app/components/skeleton/programs-skeleton";
 import { Suspense } from "react";
 
 export default function Page({
@@ -7,7 +8,7 @@ export default function Page({
   searchParams: Promise<{ q?: string }>;
 }) {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<ProgramsSkeleton />}>
       <SearchResults searchParams={searchParams} />
     </Suspense>
   );

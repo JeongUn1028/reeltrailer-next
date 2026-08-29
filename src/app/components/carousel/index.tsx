@@ -1,75 +1,82 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
 import type { ProgramType } from "@/app/types/types";
 import Carousel from "./carousel";
 import CarouselList from "./carousel-list";
 import styles from "./index.module.css";
 import constants from "../../../config/ott-provider-ids.json";
 
-//* Header 영역의 선택에 따라 Carousel과 CarouselList가 변경
-//* ALL 일 경우 인기 영상
-//* 인기영상중 각 OTT별로 제공되는 영상만 필터링하여 CarouselList에 전달
+//* url 생성 함수
+function buildUrl(ott: string | undefined) {
+  const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/getMovies`);
 
+  url.searchParams.append("page", "1");
+
+  url.searchParams.append("limit", "20");
+
+  if (ott) {
+    const ottName = ott as keyof typeof constants;
+
+    const providerId = constants[ottName];
+
+    if (providerId) {
+      url.searchParams.append("providerId", providerId as string);
+    }
+  }
+
+  return url.toString();
+}
+
+//* 영화 정보를 가져오는 함수
+const fetchMovies = async (ott: string | undefined): Promise<ProgramType[]> => {
+  const url = buildUrl(ott);
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("영화 정보를 가져오지 못했습니다.");
+  }
+
+  const { movies } = (await response.json()) as { movies: ProgramType[] };
+  return movies || [];
+};
+
+//* CarouselContainer 컴포넌트
 export default function CarouselContainer() {
   const params = useParams();
-  const router = useRouter();
-  const ott = params?.ott;
+  const ott = typeof params?.ott === "string" ? params.ott : undefined;
 
-  //* 인기 영상 전체
-  const [Programs, setPrograms] = useState<ProgramType[]>([]);
-  //* 선택된 영상 ID
+  const { data } = useSuspenseQuery({
+    queryKey: ["movies", ott],
+    queryFn: () => fetchMovies(ott),
+    staleTime: 1000 * 60 * 5, // 5분간 캐시 유지
+    gcTime: 1000 * 60 * 10,
+    retry: 1, // 에러 발생 시 최대 1회만 재시도
+  });
+
+  const programs = useMemo(
+    () => data.filter((movie) => movie?.trailerKey != null),
+    [data],
+  );
+
   const [selectedVideoId, setSelectedVideoId] = useState<string>("");
 
-  useEffect(() => {
-    const fetchPrograms = async () => {
-      try {
-        const url = new URL(
-          `${process.env.NEXT_PUBLIC_API_URL}/getMovies?page=1&limit=20`,
-        );
-        if (ott) {
-          const ottName = ott as keyof typeof constants;
-          const providerId = ott ? constants[ottName] : undefined;
-          url.searchParams.append("providerId", providerId as string);
-        }
-        const response = await fetch(url.toString());
-        if (!response.ok) {
-          alert("영화정보를 가져오는데 실패했습니다.");
-          router.push("/");
-          return;
-        }
-        const data = await response.json();
-        setPrograms(
-          data.movies.filter(
-            (movie: ProgramType | undefined) =>
-              movie?.trailerKey !== null && movie?.trailerKey !== undefined,
-          ),
-        );
-        setSelectedVideoId(
-          data.movies.find(
-            (movie: ProgramType | undefined) =>
-              movie?.trailerKey !== null && movie?.trailerKey !== undefined,
-          )?.trailerKey || "",
-        );
-      } catch (error) {
-        console.error("Error fetching programs:", error);
-        alert("영화정보를 가져오는중 에러가 발생했습니다.");
-        router.replace("/");
-      }
-    };
-    fetchPrograms();
-  }, [ott, router]);
+  const currentVideoId =
+    selectedVideoId && programs.some((p) => p.trailerKey === selectedVideoId)
+      ? selectedVideoId
+      : programs[0]?.trailerKey || "";
 
   return (
     <div className={styles.carouselLayout}>
       <div className={styles.playerPane}>
-        <Carousel videoId={selectedVideoId} />
+        <Carousel videoId={currentVideoId} />
       </div>
       <div className={styles.listPane}>
         <CarouselList
-          programs={Programs}
-          selectedVideoId={selectedVideoId}
+          programs={programs}
+          selectedVideoId={currentVideoId}
           onSelectVideo={setSelectedVideoId}
         />
       </div>

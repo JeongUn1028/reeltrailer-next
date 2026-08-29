@@ -20,7 +20,7 @@ export default function CarouselList({
       <h3 className={styles.railTitle}>추천하는 영상 목록</h3>
       <p className={styles.railCount}>{programs.length} videos</p>
       <div className={styles.railTrack}>
-        {programs.map((program) => {
+        {programs.map((program, index) => {
           const isActive = selectedVideoId === program.trailerKey;
 
           return (
@@ -41,14 +41,14 @@ export default function CarouselList({
                 className={styles.thumbnail}
                 width={480}
                 height={270}
-                loading="eager"
+                priority={index === 0}
               />
               <div className={styles.cardInfo}>
                 <span className={styles.cardMeta}>{program.title}</span>
                 <span className={styles.cardMeta}>
                   {Array.from(
                     new Set(
-                      program.providers.map((provider) =>
+                      program.providers?.map((provider) =>
                         normalizeProviderName(provider.providerName),
                       ),
                     ),

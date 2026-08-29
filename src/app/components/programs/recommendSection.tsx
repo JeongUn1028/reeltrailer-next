@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import genres from "../../../config/genre.json";
 import Programs from "./index";
+import ProgramsSkeleton from "../skeleton/programs-skeleton";
 
 export default function RecommendSection({
   providerId,
@@ -12,10 +14,10 @@ export default function RecommendSection({
     ...genres.map((genre) => genre.name),
   ];
   return (
-    <>
+    <Suspense fallback={<ProgramsSkeleton />}>
       {recommendedName.map((name) => (
         <Programs key={name} title={name} providerId={providerId} />
       ))}
-    </>
+    </Suspense>
   );
 }

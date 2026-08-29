@@ -11,11 +11,6 @@ export type MovieWithProviders = Prisma.MovieGetPayload<{
         provider: true;
       };
     };
-    genres: {
-      include: {
-        genre: true;
-      };
-    };
   };
 }>;
 
@@ -47,7 +42,6 @@ export async function getMovies({
     where: providerId ? { providers: { some: { providerId } } } : {},
     include: {
       providers: {
-        where: providerId ? { providerId } : undefined,
         include: {
           provider: true,
         },
@@ -83,7 +77,6 @@ export async function getTvShows({
     where: providerId ? { providers: { some: { providerId } } } : {},
     include: {
       providers: {
-        where: providerId ? { providerId } : undefined,
         include: {
           provider: true,
         },
@@ -109,9 +102,7 @@ export async function getTvShows({
 }
 
 //* 특정 영화 상세 조회
-export async function getMovieById(
-  id: number,
-): Promise<MovieWithProviders | null> {
+export async function getMovieById(id: number): Promise<ProgramType | null> {
   const movie = await prisma.movie.findUnique({
     where: { id },
     include: {
@@ -127,13 +118,15 @@ export async function getMovieById(
       },
     },
   });
-  return movie;
+  return {
+    ...movie,
+    genres: movie?.genres.map((g) => g.genre) || [],
+    providers: movie?.providers.map((p) => p.provider) || [],
+  };
 }
 
 //* 특정 TV 프로그램 상세 조회
-export async function getTvShowById(
-  id: number,
-): Promise<TVShowWithProviders | null> {
+export async function getTvShowById(id: number): Promise<ProgramType | null> {
   const tvShow = await prisma.tvShow.findUnique({
     where: { id },
     include: {
@@ -149,7 +142,11 @@ export async function getTvShowById(
       },
     },
   });
-  return tvShow;
+  return {
+    ...tvShow,
+    genres: tvShow?.genres.map((g) => g.genre) || [],
+    providers: tvShow?.providers.map((p) => p.provider) || [],
+  };
 }
 
 //* 검색

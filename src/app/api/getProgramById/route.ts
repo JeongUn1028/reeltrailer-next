@@ -7,6 +7,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const idParams = searchParams.get("id");
     const programId = Number(idParams);
+    if (isNaN(programId)) {
+      return new Response("ID parameter is invalid", { status: 400 });
+    }
     const programKind = searchParams.get("kind");
     if (!idParams) {
       return new Response("ID parameter is missing", { status: 400 });
@@ -31,6 +34,10 @@ export async function GET(request: NextRequest) {
 
     return new Response("Kind parameter is invalid", { status: 400 });
   } catch (error) {
-    return new Response("Internal Server Error" + (error instanceof Error ? `: ${error.message}` : ""), { status: 500 });
+    return new Response(
+      "Internal Server Error" +
+        (error instanceof Error ? `: ${error.message}` : ""),
+      { status: 500 },
+    );
   }
 }
