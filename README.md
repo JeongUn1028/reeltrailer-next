@@ -20,6 +20,7 @@
 - 제목 기반 영화·TV 통합 검색
 - 포스터, 원제, 줄거리, 평점, 공개 연도, 장르, 시청 가능 OTT 표시
 - 동일한 상세 컴포넌트를 일반 페이지와 인터셉팅 라우트 모달에서 재사용
+- 캐러셀과 추천 목록의 Suspense 기반 로딩 스켈레톤 UI
 - 존재하지 않는 프로그램, 잘못된 프로그램 타입, 유효하지 않은 OTT 경로의 404 처리
 - Vercel Cron을 통한 TMDB 콘텐츠 및 예고편 정보 동기화
 
@@ -57,9 +58,11 @@ flowchart TD
 
 ## 설계 포인트
 
-### 서버 컴포넌트 중심 데이터 조회
+### 서버 컴포넌트와 클라이언트 쿼리 분리
 
-추천 섹션과 상세 정보는 서버 컴포넌트에서 Prisma 조회 및 내부 API 호출을 수행합니다. 브라우저에 필요한 상호작용은 검색 입력, OTT 탭, 모달 닫기처럼 범위를 좁혀 클라이언트 컴포넌트로 분리했습니다.
+추천 섹션과 상세 정보는 서버 컴포넌트에서 Prisma를 통해 조회합니다. 예고편 캐러셀은 React Query로 `/api/getMovies`를 조회하며, OTT 변경 시 provider ID를 쿼리 키에 포함해 캐시를 분리합니다. 브라우저 상호작용은 검색 입력, OTT 탭, 캐러셀 선택, 모달 닫기처럼 필요한 범위만 클라이언트 컴포넌트로 분리했습니다.
+
+캐러셀과 추천 섹션은 각각 Suspense fallback을 제공하므로, 데이터를 기다리는 동안 실제 카드와 같은 크기의 스켈레톤 UI를 표시합니다.
 
 ### 영화와 TV의 공통 화면 모델
 
@@ -93,7 +96,8 @@ type ProgramMediaType = "movie" | "tvshow";
 
 ## 데이터 모델
 
-```mermaiderDiagram
+```mermaid
+erDiagram
 		Movie ||--o{ MoviesOnGenres : has
 		Genre ||--o{ MoviesOnGenres : contains
 		TvShow ||--o{ TvShowsOnGenres : has
@@ -129,14 +133,14 @@ type ProgramMediaType = "movie" | "tvshow";
 
 ## API
 
-| Method | Endpoint                  | 설명                                            |
-| ------ | ------------------------- | ----------------------------------------------- |
-| GET    | `/api/getMovies`          | 인기순 영화 조회, `providerId` 필터 지원        |
-| GET    | `/api/getTvShows`         | 인기순 TV 프로그램 조회, `providerId` 필터 지원 |
-| GET    | `/api/getProgramsByGenre` | 장르별 영화·TV 프로그램 조회                    |
-| GET    | `/api/getProgramById`     | `id`와 `kind` 기준 상세 조회                    |
-| GET    | `/api/search`             | 제목 기준 영화·TV 통합 검색                     |
-| GET    | `/api/cron/sync-tmdb`     | TMDB 콘텐츠 및 제공자 데이터 동기화             |
+| Method | Endpoint                  | 설명                                                           |
+| ------ | ------------------------- | -------------------------------------------------------------- |
+| GET    | `/api/getMovies`          | 인기순 영화 조회. `page`, `limit` 필수, `providerId` 필터 지원 |
+| GET    | `/api/getTvShows`         | 인기순 TV 프로그램 조회. `page`, `limit` 필수, 필터 지원       |
+| GET    | `/api/getProgramsByGenre` | 장르별 영화·TV 프로그램 조회. `genre` 필수                     |
+| GET    | `/api/getProgramById`     | `id`와 `kind` 기준 상세 조회                                   |
+| GET    | `/api/search`             | 제목 기준 영화·TV 통합 검색                                    |
+| GET    | `/api/cron/sync-tmdb`     | Bearer 인증으로 보호된 TMDB 콘텐츠 및 제공자 동기화            |
 
 장르 API는 영화와 TV를 구분할 수 있도록 다음 형태로 반환합니다.
 
@@ -200,6 +204,8 @@ TMDB_API_KEY="your-tmdb-api-key"
 CRON_SECRET_KEY="your-cron-secret"
 NEXT_PUBLIC_API_URL="http://localhost:3000/api"
 ```
+
+`NEXT_PUBLIC_API_URL`은 캐러셀에서 사용하는 브라우저용 API 기준 주소입니다. 로컬 개발 환경에서는 위 값처럼 `/api`까지 포함해야 합니다.
 
 ### 데이터베이스 준비
 
