@@ -7,6 +7,18 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 //* 주요 OTT Providers IDs (Netflix: 8, Disney+: 337, Watcha: 97, Wavve: 356, Tving: 1796)
 const OTT_PROVIDER_IDS = "8|337|97|356|1796";
 
+//* 영화/TV 각각 목표로 수집할 개수 (TMDB discover는 페이지당 20개씩 반환)
+const TARGET_ITEM_COUNT = 300;
+
+//* 한 번에 병렬로 처리할 아이템 개수 (너무 크면 TMDB 레이트리밋에 걸릴 수 있음)
+const BATCH_SIZE = 5;
+
+//* 배치 사이에 대기할 시간 (ms) - TMDB API 레이트리밋 회피용
+const BATCH_DELAY_MS = 500;
+
+//* ms만큼 대기하는 헬퍼 함수
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 //* 날짜 유효성 검사 및 Date 객체 변환 헬퍼 함수
 const parseDate = (dateString: string): Date | null => {
   if (!dateString) return null;
@@ -114,6 +126,40 @@ async function fetchTrailerKey(
   return trailer ? trailer.key : (videos[0]?.key ?? null);
 }
 
+//* TMDB discover API를 여러 페이지 순회하며 원하는 개수만큼 결과를 모으는 헬퍼 함수
+//* TMDB discover는 페이지당 20개씩 반환하므로, targetCount=300이면 최대 15페이지를 호출합니다.
+async function fetchDiscoverPages<T>(
+  type: "movie" | "tv",
+  targetCount: number,
+): Promise<T[]> {
+  const results: T[] = [];
+  const maxPages = Math.ceil(targetCount / 20);
+
+  for (let page = 1; page <= maxPages; page++) {
+    const res = await fetch(
+      `${TMDB_BASE_URL}/discover/${type}?api_key=${TMDB_API_KEY}&language=ko-KR&watch_region=KR&with_watch_monetization_types=flatrate&with_watch_providers=${OTT_PROVIDER_IDS}&sort_by=popularity.desc&page=${page}`,
+      { cache: "no-store" },
+    );
+
+    if (!res.ok) {
+      console.error(`Failed to fetch ${type} discover page ${page}`);
+      break;
+    }
+
+    const data = await res.json();
+    const pageResults: T[] = data.results || [];
+
+    // TMDB에 남은 페이지가 없으면 중단 (total_pages 초과 방지)
+    if (pageResults.length === 0) break;
+
+    results.push(...pageResults);
+
+    if (data.total_pages && page >= data.total_pages) break;
+  }
+
+  return results.slice(0, targetCount);
+}
+
 //* 특정 영화/TV의 한국 Watch Providers(flatrate)를 가져오는 헬퍼 함수 (중복 요청 방지용으로 1회만 호출)
 async function fetchKrFlatrateProviders(
   type: "movie" | "tv",
@@ -125,6 +171,33 @@ async function fetchKrFlatrateProviders(
   );
   const data = await res.json();
   return data.results?.KR?.flatrate || [];
+}
+
+//* 아이템 배열을 batchSize만큼씩 끊어 Promise.all로 병렬 처리하고,
+//* 배치 사이에 delayMs만큼 대기하는 공통 헬퍼 함수 (TMDB 레이트리밋 회피)
+async function processInBatches<T>(
+  items: T[],
+  batchSize: number,
+  delayMs: number,
+  processFn: (item: T) => Promise<void>,
+) {
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+
+    await Promise.all(
+      batch.map((item) =>
+        processFn(item).catch((error) => {
+          // 배치 내 한 아이템이 실패해도 나머지는 계속 진행되도록 에러를 여기서 흡수
+          console.error("❌ 아이템 처리 실패:", error);
+        }),
+      ),
+    );
+
+    // 마지막 배치 이후에는 굳이 대기할 필요 없음
+    if (i + batchSize < items.length) {
+      await sleep(delayMs);
+    }
+  }
 }
 
 //* Watch Provider 및 연결 테이블을 upsert하는 공통 헬퍼 함수
@@ -224,6 +297,111 @@ interface TmdbGenreResponse {
   genres: TmdbGenre[];
 }
 
+//* 영화 한 편을 처리하는 함수 (provider 확인 → upsert → provider 저장까지 한 번에)
+async function processMovie(movie: TMDBMovie) {
+  // Watch Providers는 이 movie에 대해 딱 한 번만 fetch (스킵 여부 확인 + 저장 모두에 재사용)
+  const krProviders = await fetchKrFlatrateProviders("movie", movie.id);
+
+  // ⭐️ 핵심: 한국 OTT 목록이 0개라면 Movie DB에 저장하지 않고 바로 패스합니다!
+  if (krProviders.length === 0) {
+    return;
+  }
+
+  const trailerKey = await fetchTrailerKey("movie", movie.id);
+
+  await prisma.movie.upsert({
+    where: { id: movie.id },
+    update: {
+      title: movie.title,
+      originalTitle: movie.original_title,
+      overview: movie.overview,
+      posterPath: movie.poster_path,
+      backdropPath: movie.backdrop_path,
+      trailerKey,
+      releaseDate: parseDate(movie.release_date),
+      voteAverage: movie.vote_average,
+      voteCount: movie.vote_count,
+      popularity: movie.popularity,
+      genres: {
+        deleteMany: {}, // 기존 장르 관계 삭제
+        create: movie.genre_ids.map((genreId: number) => ({
+          genre: { connect: { id: genreId } },
+        })),
+      },
+    },
+    create: {
+      id: movie.id,
+      title: movie.title,
+      originalTitle: movie.original_title,
+      overview: movie.overview,
+      posterPath: movie.poster_path,
+      backdropPath: movie.backdrop_path,
+      trailerKey,
+      releaseDate: parseDate(movie.release_date),
+      voteAverage: movie.vote_average,
+      voteCount: movie.vote_count,
+      popularity: movie.popularity,
+      genres: {
+        create: movie.genre_ids.map((genreId: number) => ({
+          genre: { connect: { id: genreId } },
+        })),
+      },
+    },
+  });
+
+  // Movie의 Watch Providers 저장 (위에서 이미 가져온 krProviders 재사용)
+  await upsertWatchProviders(krProviders, { type: "movie", id: movie.id });
+}
+
+//* TV 프로그램 한 편을 처리하는 함수 (provider 확인 → upsert → provider 저장까지 한 번에)
+async function processTvShow(tvShow: TMDBTVShow) {
+  const tvProviders = await fetchKrFlatrateProviders("tv", tvShow.id);
+  const trailerKey = await fetchTrailerKey("tv", tvShow.id);
+
+  await prisma.tvShow.upsert({
+    where: { id: tvShow.id },
+    update: {
+      title: tvShow.name,
+      originalTitle: tvShow.original_name,
+      overview: tvShow.overview,
+      posterPath: tvShow.poster_path,
+      backdropPath: tvShow.backdrop_path,
+      trailerKey,
+      firstAirDate: parseDate(tvShow.first_air_date),
+      voteAverage: tvShow.vote_average,
+      voteCount: tvShow.vote_count,
+      popularity: tvShow.popularity,
+      genres: {
+        deleteMany: {}, // 기존 장르 관계 삭제
+        create: tvShow.genre_ids.map((genreId: number) => ({
+          genre: { connect: { id: genreId } },
+        })),
+      },
+    },
+    create: {
+      id: tvShow.id,
+      title: tvShow.name,
+      originalTitle: tvShow.original_name,
+      overview: tvShow.overview,
+      posterPath: tvShow.poster_path,
+      backdropPath: tvShow.backdrop_path,
+      trailerKey: trailerKey,
+      firstAirDate: parseDate(tvShow.first_air_date),
+      voteAverage: tvShow.vote_average,
+      voteCount: tvShow.vote_count,
+      popularity: tvShow.popularity,
+      genres: {
+        create: tvShow.genre_ids.map((genreId: number) => ({
+          genre: { connect: { id: genreId } },
+        })),
+      },
+    },
+  });
+
+  // TV Show의 Watch Providers 저장 (위에서 이미 가져온 tvProviders 재사용)
+  await upsertWatchProviders(tvProviders, { type: "tv", id: tvShow.id });
+}
+
 export async function GET(request: Request) {
   //* 1. Vercel Cron Security Key 검증
   const authHeader = request.headers.get("authorization");
@@ -240,130 +418,28 @@ export async function GET(request: Request) {
 
   try {
     // -----------------------------------------
-    //  TMDB 인기 영화 목록 Fetch
+    //  TMDB 인기 영화 목록 Fetch (최대 300개, 15페이지)
     // -----------------------------------------
-    const moviesRes = await fetch(
-      `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=ko-KR&watch_region=KR&with_watch_monetization_types=flatrate&with_watch_providers=${OTT_PROVIDER_IDS}&sort_by=popularity.desc&page=1`,
-      { cache: "no-store" },
+    const movies: TMDBMovie[] = await fetchDiscoverPages<TMDBMovie>(
+      "movie",
+      TARGET_ITEM_COUNT,
     );
-    const movieData = await moviesRes.json();
-    const movies: TMDBMovie[] = movieData.results;
 
-    for (const movie of movies) {
-      // 2. Watch Providers는 이 movie에 대해 딱 한 번만 fetch (스킵 여부 확인 + 저장 모두에 재사용)
-      const krProviders = await fetchKrFlatrateProviders("movie", movie.id);
-
-      // ⭐️ 핵심: 한국 OTT 목록이 0개라면 Movie DB에 저장하지 않고 바로 패스합니다!
-      if (krProviders.length === 0) {
-        continue;
-      }
-      const trailerKey = await fetchTrailerKey("movie", movie.id);
-      // 3. Movie 데이터 Upsert
-      await prisma.movie.upsert({
-        where: { id: movie.id },
-        update: {
-          title: movie.title,
-          originalTitle: movie.original_title,
-          overview: movie.overview,
-          posterPath: movie.poster_path,
-          backdropPath: movie.backdrop_path,
-          trailerKey,
-          releaseDate: parseDate(movie.release_date),
-          voteAverage: movie.vote_average,
-          voteCount: movie.vote_count,
-          popularity: movie.popularity,
-          genres: {
-            deleteMany: {}, // 기존 장르 관계 삭제
-            create: movie.genre_ids.map((genreId: number) => ({
-              genre: { connect: { id: genreId } },
-            })),
-          },
-        },
-        create: {
-          id: movie.id,
-          title: movie.title,
-          originalTitle: movie.original_title,
-          overview: movie.overview,
-          posterPath: movie.poster_path,
-          backdropPath: movie.backdrop_path,
-          trailerKey,
-          releaseDate: parseDate(movie.release_date),
-          voteAverage: movie.vote_average,
-          voteCount: movie.vote_count,
-          popularity: movie.popularity,
-          genres: {
-            create: movie.genre_ids.map((genreId: number) => ({
-              genre: { connect: { id: genreId } },
-            })),
-          },
-        },
-      });
-
-      // 4. Movie의 Watch Providers 저장 (위에서 이미 가져온 krProviders 재사용)
-      await upsertWatchProviders(krProviders, { type: "movie", id: movie.id });
-    }
+    // 영화들을 BATCH_SIZE개씩 끊어 Promise.all로 병렬 처리, 배치 사이에는 대기
+    await processInBatches(movies, BATCH_SIZE, BATCH_DELAY_MS, processMovie);
 
     // -----------------------------------------
-    // OTT 전용 TV 프로그램 Fetch
+    // OTT 전용 TV 프로그램 Fetch (최대 300개, 15페이지)
     // (영화 루프 밖으로 이동: 기존에는 영화 개수만큼 TV 목록 전체를 매번 재조회하고
     //  재처리하는 심각한 중복 요청이 있었음)
     // -----------------------------------------
-    const tvRes = await fetch(
-      `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&language=ko-KR&watch_region=KR&with_watch_monetization_types=flatrate&with_watch_providers=${OTT_PROVIDER_IDS}&sort_by=popularity.desc&page=1`,
-      { cache: "no-store" },
+    const tvShows: TMDBTVShow[] = await fetchDiscoverPages<TMDBTVShow>(
+      "tv",
+      TARGET_ITEM_COUNT,
     );
-    const tvData = await tvRes.json();
-    const tvShows: TMDBTVShow[] = tvData.results;
 
-    for (const tvShow of tvShows) {
-      // Program 별 OTT Providers Fetch (1회만 호출 후 재사용)
-      const tvProviders = await fetchKrFlatrateProviders("tv", tvShow.id);
-      const trailerKey = await fetchTrailerKey("tv", tvShow.id);
-
-      // 5. TV Show 데이터 Upsert
-      await prisma.tvShow.upsert({
-        where: { id: tvShow.id },
-        update: {
-          title: tvShow.name,
-          originalTitle: tvShow.original_name,
-          overview: tvShow.overview,
-          posterPath: tvShow.poster_path,
-          backdropPath: tvShow.backdrop_path,
-          trailerKey,
-          firstAirDate: parseDate(tvShow.first_air_date),
-          voteAverage: tvShow.vote_average,
-          voteCount: tvShow.vote_count,
-          popularity: tvShow.popularity,
-          genres: {
-            deleteMany: {}, // 기존 장르 관계 삭제
-            create: tvShow.genre_ids.map((genreId: number) => ({
-              genre: { connect: { id: genreId } },
-            })),
-          },
-        },
-        create: {
-          id: tvShow.id,
-          title: tvShow.name,
-          originalTitle: tvShow.original_name,
-          overview: tvShow.overview,
-          posterPath: tvShow.poster_path,
-          backdropPath: tvShow.backdrop_path,
-          trailerKey: trailerKey,
-          firstAirDate: parseDate(tvShow.first_air_date),
-          voteAverage: tvShow.vote_average,
-          voteCount: tvShow.vote_count,
-          popularity: tvShow.popularity,
-          genres: {
-            create: tvShow.genre_ids.map((genreId: number) => ({
-              genre: { connect: { id: genreId } },
-            })),
-          },
-        },
-      });
-
-      // 6. TV Show의 Watch Providers 저장 (위에서 이미 가져온 tvProviders 재사용)
-      await upsertWatchProviders(tvProviders, { type: "tv", id: tvShow.id });
-    }
+    // TV 프로그램들을 BATCH_SIZE개씩 끊어 Promise.all로 병렬 처리, 배치 사이에는 대기
+    await processInBatches(tvShows, BATCH_SIZE, BATCH_DELAY_MS, processTvShow);
 
     return NextResponse.json({
       success: true,
