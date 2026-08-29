@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Header from "./components/header/header";
+import Providers from "./provider";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -17,10 +18,12 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="min-h-full flex flex-col">
-        <Header />
-        {children}
-        {modal}
-        <div id="modal-root"></div>
+        <Providers>
+          <Header />
+          {children}
+          {modal}
+          <div id="modal-root"></div>
+        </Providers>
       </body>
     </html>
   );

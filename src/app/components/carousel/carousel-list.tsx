@@ -48,7 +48,7 @@ export default function CarouselList({
                 <span className={styles.cardMeta}>
                   {Array.from(
                     new Set(
-                      program.providers.map((provider) =>
+                      program.providers?.map((provider) =>
                         normalizeProviderName(provider.providerName),
                       ),
                     ),

@@ -17,7 +17,7 @@ const getPrograms = async (
         limit: 20,
         providerId: parsedProviderId,
       });
-      return movies as ProgramType[];
+      return movies;
     }
     if (title === "프로그램") {
       const tvShows = await getTvShows({
@@ -25,14 +25,14 @@ const getPrograms = async (
         limit: 20,
         providerId: parsedProviderId,
       });
-      return tvShows as ProgramType[];
+      return tvShows;
     }
     const programs = await getProgramsByGenre({
       genreIds: genres.find((genre) => genre.name === title)?.id,
       limit: 20,
       providerIds: parsedProviderId,
     });
-    return [...programs.movies, ...programs.tvShows] as ProgramType[];
+    return [...programs.movies, ...programs.tvShows];
   } catch (error) {
     console.error("[Programs Component] Error fetching programs:", error);
     return null;

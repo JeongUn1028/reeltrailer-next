@@ -2,48 +2,81 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { ProgramType } from "@/app/types/types";
 import { normalizeProviderName } from "@/app/lib/normalizeProviderName";
+import { getMovieById, getTvShowById } from "@/server/contents";
 import styles from "./programDetail.module.css";
 
-export default async function ProgramDetail({
-  programId,
-  kind,
-}: {
-  programId: string;
-  kind?: string;
-}) {
-  if (
-    !/^[1-9]\d*$/.test(programId) ||
-    !["movie", "tvshow"].includes(kind ?? "")
-  ) {
+interface ProgramDetailViewProps {
+  kind: "movie" | "tvshow";
+  title?: string;
+  originalTitle?: string | null;
+  overview?: string | null;
+  voteAverage?: number | null;
+  releaseYear: number | null;
+  genreDetails: string[];
+  normalizedProviders: string[];
+  posterSrc: string | null;
+}
+
+const fetchProgramById = async (
+  programId: string,
+  kind: string,
+): Promise<ProgramType> => {
+  //* programId가 0이 아닌 자연수를 검사,
+
+  const isValidId = /^[1-9]\d*$/.test(programId);
+  const isValidKind = kind === "movie" || kind === "tvshow";
+  if (!isValidId || !isValidKind) {
+    console.error("Invalid programId or kind");
     notFound();
   }
-
-  const program = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/getProgramById?id=${programId}&kind=${kind}`,
-  );
-  if (!program.ok) {
-    if (program.status === 404) {
+  try {
+    const program =
+      kind === "movie"
+        ? await getMovieById(Number(programId))
+        : await getTvShowById(Number(programId));
+    if (!program) {
       notFound();
     }
-
-    throw new Error(`Failed to fetch program: ${program.status}`);
+    return program;
+  } catch (error) {
+    console.error("Error fetching program:", error);
+    notFound();
   }
+};
 
-  const programData: ProgramType = await program.json();
-
+const formatProgramData = (programData: ProgramType) => {
   const date = programData.releaseDate ?? programData.firstAirDate;
   const releaseYear = date ? new Date(date).getFullYear() : null;
-  const providers = programData.providers
-    .map((provider) => provider.providerName)
-    .filter(Boolean);
-
+  const genreDetails = programData.genres?.map((genre) => genre.name) || [];
+  const providers =
+    programData.providers
+      ?.map((provider) => provider.providerName)
+      .filter(Boolean) || [];
+  const normalizedProviders = providers.map(normalizeProviderName);
   const posterSrc = programData.posterPath
     ? `https://image.tmdb.org/t/p/w780${programData.posterPath}`
     : null;
 
-  const genreDetails = programData.genres.map((genre) => genre.genre?.name);
-  const normalizedProviders = providers.map(normalizeProviderName);
+  return {
+    ...programData,
+    releaseYear,
+    genreDetails,
+    normalizedProviders,
+    posterSrc,
+  };
+};
 
+export function ProgramDetailView({
+  kind,
+  title,
+  originalTitle,
+  overview,
+  voteAverage,
+  releaseYear,
+  genreDetails,
+  normalizedProviders,
+  posterSrc,
+}: ProgramDetailViewProps) {
   return (
     <article className={styles.detail}>
       <div className={styles.hero}>
@@ -51,7 +84,7 @@ export default async function ProgramDetail({
           {posterSrc ? (
             <Image
               src={posterSrc}
-              alt={`${programData.title} 포스터`}
+              alt={`${title} 포스터`}
               fill
               sizes="(max-width: 700px) 42vw, 260px"
               className={styles.poster}
@@ -66,18 +99,17 @@ export default async function ProgramDetail({
           <p className={styles.kicker}>
             {kind === "movie" ? "MOVIE" : "TV SHOW"}
           </p>
-          <h1>{programData.title}</h1>
-          {programData.originalTitle && (
-            <p className={styles.originalTitle}>{programData.originalTitle}</p>
+          <h1>{title}</h1>
+          {originalTitle && (
+            <p className={styles.originalTitle}>{originalTitle}</p>
           )}
           <div className={styles.meta}>
             <span className={styles.rating}>
-              <span aria-hidden="true">★</span>{" "}
-              {programData.voteAverage.toFixed(1)}
+              <span aria-hidden="true">★</span> {voteAverage?.toFixed(1)}
             </span>
             {releaseYear && <span>{releaseYear}</span>}
-            {genreDetails.length > 0 && (
-              <span>{genreDetails.slice(0, 2).join(" · ")}</span>
+            {genreDetails?.length > 0 && (
+              <span>{genreDetails?.slice(0, 2).join(" · ")}</span>
             )}
           </div>
         </div>
@@ -87,7 +119,7 @@ export default async function ProgramDetail({
         <section className={styles.overviewSection}>
           <p className={styles.sectionLabel}>STORY</p>
           <p className={styles.overview}>
-            {programData.overview || "등록된 줄거리 정보가 없습니다."}
+            {overview || "등록된 줄거리 정보가 없습니다."}
           </p>
         </section>
 
@@ -95,7 +127,7 @@ export default async function ProgramDetail({
           <section>
             <p className={styles.sectionLabel}>GENRES</p>
             <p className={styles.infoValue}>
-              {genreDetails.join(" · ") || "정보 없음"}
+              {genreDetails?.join(" · ") || "정보 없음"}
             </p>
           </section>
           <section>
@@ -108,4 +140,17 @@ export default async function ProgramDetail({
       </div>
     </article>
   );
+}
+
+export default async function ProgramDetail({
+  programId,
+  kind,
+}: {
+  programId: string;
+  kind: "movie" | "tvshow";
+}) {
+  const programData: ProgramType = await fetchProgramById(programId, kind);
+  const formattedProgramData = formatProgramData(programData);
+
+  return <ProgramDetailView kind={kind} {...formattedProgramData} />;
 }

@@ -23,7 +23,7 @@ export default function Program({
         {posterSrc ? (
           <Image
             src={posterSrc}
-            alt={props.title}
+            alt={props.title ?? ""}
             width={100}
             height={50}
             className={styles.image}

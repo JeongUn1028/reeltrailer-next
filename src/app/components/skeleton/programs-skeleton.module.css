@@ -1,0 +1,58 @@
+.container,
+.section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.container {
+  gap: 1.5rem;
+}
+
+.section {
+  align-items: flex-start;
+}
+
+.titleSkeleton,
+.cardSkeleton {
+  background: linear-gradient(110deg, #1f1f1f 25%, #303030 40%, #1f1f1f 55%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.titleSkeleton {
+  width: 9rem;
+  height: 1.35rem;
+  border-radius: 0.25rem;
+}
+
+.programContainer {
+  display: flex;
+  width: 100%;
+  gap: 2rem;
+  padding: 1rem 0;
+  overflow: hidden;
+}
+
+.cardSkeleton {
+  width: 200px;
+  height: 300px;
+  flex: 0 0 auto;
+  border-radius: 0.5rem;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .container {
+    gap: 1rem;
+  }
+
+  .programContainer {
+    gap: 1rem;
+  }
+}
