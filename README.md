@@ -203,9 +203,12 @@ DIRECT_URL="postgresql://user:password@host:5432/database"
 TMDB_API_KEY="your-tmdb-api-key"
 CRON_SECRET_KEY="your-cron-secret"
 NEXT_PUBLIC_API_URL="http://localhost:3000/api"
+NEXT_PUBLIC_SITE_URL="https://your-domain.example"
 ```
 
 `NEXT_PUBLIC_API_URL`은 캐러셀에서 사용하는 브라우저용 API 기준 주소입니다. 로컬 개발 환경에서는 위 값처럼 `/api`까지 포함해야 합니다.
+
+`NEXT_PUBLIC_SITE_URL`은 canonical URL, Open Graph, `robots.txt`, `sitemap.xml` 생성에 사용합니다. 배포 환경에서는 실제 서비스 도메인으로 설정합니다.
 
 ### 데이터베이스 준비
 

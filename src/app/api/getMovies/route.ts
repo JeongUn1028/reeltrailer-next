@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import { getMovies } from "@/server/contents";
 
@@ -23,7 +22,8 @@ export async function GET(request: Request) {
 
     const page = Number(searchParams.get("page") ?? "1");
     const limit = Number(searchParams.get("limit") ?? "20");
-    const providerId = Number(searchParams.get("providerId")) || undefined;
+    const providerIdParam = searchParams.get("providerId");
+    const providerId = Number(providerIdParam) || undefined;
 
     const movies = await getMovies({ page, limit, providerId });
 
