@@ -118,6 +118,9 @@ export async function getMovieById(id: number): Promise<ProgramType | null> {
       },
     },
   });
+  if (!movie) {
+    return null;
+  }
   return {
     ...movie,
     genres: movie?.genres.map((g) => g.genre) || [],
@@ -142,6 +145,9 @@ export async function getTvShowById(id: number): Promise<ProgramType | null> {
       },
     },
   });
+  if (!tvShow) {
+    return null;
+  }
   return {
     ...tvShow,
     genres: tvShow?.genres.map((g) => g.genre) || [],
