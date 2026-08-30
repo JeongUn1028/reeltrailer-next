@@ -162,56 +162,56 @@ export async function searchPrograms(query: string) {
     return [];
   }
 
-  const [movies, tvShows] = await Promise.all([
-    prisma.movie.findMany({
-      where: {
-        title: {
-          contains: query,
-          mode: "insensitive",
+  const movies = await prisma.movie.findMany({
+    where: {
+      title: {
+        contains: query,
+        mode: "insensitive",
+      },
+    },
+    include: {
+      providers: {
+        include: {
+          provider: true,
         },
       },
-      include: {
-        providers: {
-          include: {
-            provider: true,
-          },
-        },
-        genres: {
-          include: {
-            genre: true,
-          },
+      genres: {
+        include: {
+          genre: true,
         },
       },
-      orderBy: {
-        popularity: "desc",
+    },
+    orderBy: {
+      popularity: "desc",
+    },
+    take: 20,
+  });
+
+  const tvShows = await prisma.tvShow.findMany({
+    where: {
+      title: {
+        contains: query,
+        mode: "insensitive",
       },
-      take: 20,
-    }),
-    prisma.tvShow.findMany({
-      where: {
-        title: {
-          contains: query,
-          mode: "insensitive",
+    },
+    include: {
+      providers: {
+        include: {
+          provider: true,
         },
       },
-      include: {
-        providers: {
-          include: {
-            provider: true,
-          },
-        },
-        genres: {
-          include: {
-            genre: true,
-          },
+      genres: {
+        include: {
+          genre: true,
         },
       },
-      orderBy: {
-        popularity: "desc",
-      },
-      take: 20,
-    }),
-  ]);
+    },
+    orderBy: {
+      popularity: "desc",
+    },
+    take: 20,
+  });
+
   const formattedMovies = movies.map((movie) => ({
     ...movie,
     mediaType: "movie" as const,
