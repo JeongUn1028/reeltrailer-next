@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "./components/header/header";
 import Providers from "./provider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -34,6 +35,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="min-h-full flex flex-col">
+        <SpeedInsights />
         <Providers>
           <Header />
           {children}
