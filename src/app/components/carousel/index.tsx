@@ -11,23 +11,21 @@ import constants from "../../../config/ott-provider-ids.json";
 
 //* url 생성 함수
 function buildUrl(ott: string | undefined) {
-  const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/getMovies`);
+  const params = new URLSearchParams();
 
-  url.searchParams.append("page", "1");
-
-  url.searchParams.append("limit", "20");
+  params.append("page", "1");
+  params.append("limit", "20");
 
   if (ott) {
     const ottName = ott as keyof typeof constants;
-
     const providerId = constants[ottName];
 
     if (providerId) {
-      url.searchParams.append("providerId", providerId as string);
+      params.append("providerId", providerId as string);
     }
   }
 
-  return url.toString();
+  return `/api/getMovies?${params.toString()}`;
 }
 
 //* 영화 정보를 가져오는 함수
