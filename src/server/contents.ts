@@ -309,26 +309,26 @@ export async function getProgramsByGenre({
   }
 
   // 5. 영화 & TV 프로그램 병렬 조회
-  const [movies, tvShows] = await Promise.all([
-    prisma.movie.findMany({
-      where: movieWhere,
-      include: {
-        providers: { include: { provider: true } },
-        genres: { include: { genre: true } },
-      },
-      orderBy: { popularity: "desc" },
-      take: limit,
-    }),
-    prisma.tvShow.findMany({
-      where: tvShowWhere,
-      include: {
-        providers: { include: { provider: true } },
-        genres: { include: { genre: true } },
-      },
-      orderBy: { popularity: "desc" },
-      take: limit,
-    }),
-  ]);
+
+  const movies = await prisma.movie.findMany({
+    where: movieWhere,
+    include: {
+      providers: { include: { provider: true } },
+      genres: { include: { genre: true } },
+    },
+    orderBy: { popularity: "desc" },
+    take: limit,
+  });
+
+  const tvShows = await prisma.tvShow.findMany({
+    where: tvShowWhere,
+    include: {
+      providers: { include: { provider: true } },
+      genres: { include: { genre: true } },
+    },
+    orderBy: { popularity: "desc" },
+    take: limit,
+  });
 
   // 6. 중계 테이블 구조 Flat하게 가공 (genres & providers)
   const formatRelations = <T extends ProgramWithRelations>(items: T[]) =>
