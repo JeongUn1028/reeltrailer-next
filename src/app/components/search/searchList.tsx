@@ -9,12 +9,30 @@ export default async function SearchResults({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  if (!q) {
-    alert("검색어를 입력해주세요.");
-    return null;
+  const query = q?.trim();
+
+  if (!query) {
+    return (
+      <main className={styles.page}>
+        <section
+          className={styles.container}
+          aria-labelledby="search-results-title"
+        >
+          <div className={styles.header}>
+            <div>
+              <p className={styles.eyebrow}>SEARCH RESULTS</p>
+              <h1 id="search-results-title">검색어를 입력해주세요</h1>
+            </div>
+          </div>
+          <div className={styles.empty}>
+            검색할 콘텐츠 제목을 입력해 주세요.
+          </div>
+        </section>
+      </main>
+    );
   }
 
-  const programs: ProgramType[] = await searchPrograms(q);
+  const programs: ProgramType[] = await searchPrograms(query);
   return (
     <main className={styles.page}>
       <section
@@ -25,7 +43,7 @@ export default async function SearchResults({
           <div>
             <p className={styles.eyebrow}>SEARCH RESULTS</p>
             <h1 id="search-results-title">
-              {q ? <>&ldquo;{q}&rdquo; 검색 결과</> : "전체 검색 결과"}
+              <>&ldquo;{query}&rdquo; 검색 결과</>
             </h1>
           </div>
           <span className={styles.count}>{programs.length}편</span>

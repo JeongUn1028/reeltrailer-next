@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ProgramDetail from "@/app/components/programs/programDetail";
 import styles from "@/app/components/programs/programDetail.module.css";
-import { isValidKind } from "@/app/lib/isVaildKind";
+import { isValidKind } from "@/app/lib/isValidKind";
 import { getMovieById, getTvShowById } from "@/server/contents";
 
 type PageProps = {

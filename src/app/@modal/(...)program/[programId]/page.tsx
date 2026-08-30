@@ -1,7 +1,7 @@
 import Link from "next/link";
 import ProgramDetail from "@/app/components/programs/programDetail";
 import Modal from "@/app/components/modal/modal";
-import { isValidKind } from "@/app/lib/isVaildKind";
+import { isValidKind } from "@/app/lib/isValidKind";
 import styles from "./page.module.css";
 
 export default async function Page({
