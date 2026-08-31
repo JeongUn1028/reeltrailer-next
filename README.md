@@ -1,98 +1,73 @@
 # ReelTrailer
 
-영화와 TV 프로그램을 탐색하고, 어떤 OTT 서비스에서 시청할 수 있는지 확인할 수 있는 콘텐츠 큐레이션 서비스입니다. TMDB에서 수집한 콘텐츠를 PostgreSQL에 저장하고, 인기도·장르·OTT 서비스·검색어를 기준으로 빠르게 탐색할 수 있도록 구성했습니다.
+TMDB 데이터를 바탕으로 영화와 TV 프로그램을 탐색하고, 국내 구독형 OTT에서 제공되는 콘텐츠를 확인하는 서비스입니다. 인기 예고편, OTT별 추천, 장르별 목록, 통합 검색과 상세 정보를 한 흐름으로 제공합니다.
 
-> 콘텐츠 수집부터 데이터 모델링, 서버 렌더링, 인터셉팅 라우트 기반 상세 모달까지 하나의 서비스 흐름으로 구현한 프로젝트입니다.
+## 주요 기능
 
-## 프로젝트 소개
-
-### 해결하려는 문제
-
-여러 OTT 서비스에 흩어진 영화와 TV 프로그램 정보를 한 곳에서 찾고, 제목이나 장르를 기준으로 원하는 콘텐츠를 빠르게 찾을 수 있도록 했습니다.
-
-### 주요 기능
-
-- 영화와 TV 프로그램 인기 콘텐츠 탐색
+- 인기 영화 예고편 캐러셀과 YouTube 임베드 재생
 - Netflix, Disney+, Tving, Watcha, Wavve별 콘텐츠 필터링
-- 장르별 추천 섹션 제공
+- 영화, TV 프로그램, 장르별 추천 목록
 - 제목 기반 영화·TV 통합 검색
-- 포스터, 원제, 줄거리, 평점, 공개 연도, 장르, 시청 가능 OTT 표시
-- 동일한 상세 컴포넌트를 일반 페이지와 인터셉팅 라우트 모달에서 재사용
-- 캐러셀과 추천 목록의 Suspense 기반 로딩 스켈레톤 UI
-- 존재하지 않는 프로그램, 잘못된 프로그램 타입, 유효하지 않은 OTT 경로의 404 처리
-- Vercel Cron을 통한 TMDB 콘텐츠 및 예고편 정보 동기화
+- 포스터, 원제, 줄거리, 평점, 공개 연도, 장르, 제공 OTT를 포함한 상세 화면
+- 일반 상세 페이지와 인터셉팅 라우트 모달의 동일한 상세 UI 재사용
+- Suspense 기반 검색창·캐러셀·추천 목록 스켈레톤과 캐러셀 오류 상태
+- 유효하지 않은 OTT 경로와 존재하지 않거나 잘못된 상세 요청의 404 처리
+- Vercel Cron을 통한 TMDB 콘텐츠, 예고편, 국내 OTT 제공 정보 동기화
+- Open Graph 메타데이터, `robots.txt`, `sitemap.xml`, Vercel Speed Insights 적용
 
-## 사용자 흐름
+## 화면과 라우팅
+
+| 경로                               | 설명                                     |
+| ---------------------------------- | ---------------------------------------- |
+| `/`                                | 전체 콘텐츠 홈, 예고편 캐러셀, 추천 목록 |
+| `/netflix`                         | Netflix 필터 페이지                      |
+| `/disney-plus`                     | Disney+ 필터 페이지                      |
+| `/tving`                           | Tving 필터 페이지                        |
+| `/watcha`                          | Watcha 필터 페이지                       |
+| `/wavve`                           | Wavve 필터 페이지                        |
+| `/search?q={query}`                | 제목 통합 검색 결과                      |
+| `/program/{programId}?kind=movie`  | 영화 상세 페이지                         |
+| `/program/{programId}?kind=tvshow` | TV 프로그램 상세 페이지                  |
+
+콘텐츠 카드를 통해 상세 화면으로 이동할 때는 Next.js 인터셉팅 라우트가 상세 UI를 모달로 표시합니다. URL에 직접 접근하거나 새로고침하면 동일한 UI가 독립 페이지로 표시됩니다.
 
 ```mermaid
 flowchart TD
-		A[홈] --> B[OTT 탭 선택]
-		A --> C[장르별 추천]
-		A --> D[검색어 입력]
-		B --> E[OTT별 콘텐츠 목록]
-		C --> F[영화 및 TV 카드]
-		D --> G[통합 검색 결과]
-		E --> H[프로그램 상세]
-		F --> H
-		G --> H
-		H --> I{인터셉팅 라우트}
-		I -->|지원| J[상세 모달]
-		I -->|직접 접근| K[상세 페이지]
+	A[홈] --> B[OTT 필터]
+	A --> C[장르 추천]
+	A --> D[통합 검색]
+	B --> E[콘텐츠 카드]
+	C --> E
+	D --> E
+	E --> F[상세 모달 또는 상세 페이지]
 ```
 
 ## 기술 스택
 
-| 영역         | 기술                        |
-| ------------ | --------------------------- |
-| Framework    | Next.js App Router 16       |
-| Language     | TypeScript                  |
-| UI           | React 19                    |
-| Styling      | CSS Modules, Tailwind CSS 4 |
-| ORM          | Prisma 6                    |
-| Database     | PostgreSQL                  |
-| External API | TMDB API, YouTube Embed     |
-| Deployment   | Vercel                      |
-| Code quality | ESLint 9                    |
+| 영역              | 사용 기술                   |
+| ----------------- | --------------------------- |
+| Framework         | Next.js 16 App Router       |
+| Language          | TypeScript, React 19        |
+| UI                | CSS Modules, Tailwind CSS 4 |
+| Client data       | TanStack Query 5            |
+| Database          | PostgreSQL, Prisma 6        |
+| External services | TMDB API, YouTube Embed     |
+| Observability     | Vercel Speed Insights       |
+| Deployment        | Vercel, Vercel Cron         |
+| Quality           | ESLint 9                    |
 
-## 설계 포인트
+## 아키텍처
 
-### 서버 컴포넌트와 클라이언트 쿼리 분리
+### 데이터 흐름
 
-추천 섹션과 상세 정보는 서버 컴포넌트에서 Prisma를 통해 조회합니다. 예고편 캐러셀은 React Query로 `/api/getMovies`를 조회하며, OTT 변경 시 provider ID를 쿼리 키에 포함해 캐시를 분리합니다. 브라우저 상호작용은 검색 입력, OTT 탭, 캐러셀 선택, 모달 닫기처럼 필요한 범위만 클라이언트 컴포넌트로 분리했습니다.
+- 추천 목록과 상세 화면은 서버 컴포넌트에서 `src/server/contents.ts`의 Prisma 조회 함수를 사용합니다.
+- 예고편 캐러셀은 클라이언트 컴포넌트이며 `/api/getMovies`를 TanStack Query로 요청합니다.
+- 캐러셀은 OTT slug를 쿼리 키에 포함하고, 기본적으로 5분 동안 데이터를 fresh 상태로 유지하며 10분 뒤 가비지 컬렉션합니다.
+- `Movie`와 `TvShow`는 별도 모델이지만 화면에서는 `mediaType: "movie" | "tvshow"`으로 통합합니다. 같은 TMDB ID가 서로 다른 유형에 존재할 수 있으므로 상세 URL에는 `kind`가 필요합니다.
 
-캐러셀과 추천 섹션은 각각 Suspense fallback을 제공하므로, 데이터를 기다리는 동안 실제 카드와 같은 크기의 스켈레톤 UI를 표시합니다.
+### 데이터 모델
 
-### 영화와 TV의 공통 화면 모델
-
-영화와 TV는 데이터베이스에서 별도 모델로 관리하지만 카드와 상세 화면에서는 `mediaType`으로 구분하는 공통 흐름을 사용합니다.
-
-```ts
-type ProgramMediaType = "movie" | "tvshow";
-```
-
-동일한 숫자 ID가 영화와 TV에 각각 존재할 수 있기 때문에 상세 링크는 ID만 사용하지 않고 다음과 같이 타입을 함께 전달합니다.
-
-```text
-/program/550?kind=movie
-/program/550?kind=tvshow
-```
-
-### 모달과 일반 페이지의 재사용
-
-`/program/[programId]`는 직접 접근할 수 있는 상세 페이지이고, 인터셉팅 라우트는 같은 `ProgramDetail`을 `<dialog>` 안에서 렌더링합니다. 따라서 새로고침이나 직접 URL 접근에서도 동일한 상세 콘텐츠를 유지합니다.
-
-### 404 처리
-
-다음 요청은 Next.js의 `notFound()`를 통해 공통 404 화면으로 연결됩니다.
-
-- 숫자가 아닌 프로그램 ID 또는 양수가 아닌 ID
-- `movie`, `tvshow`가 아닌 상세 타입
-- 데이터베이스에 존재하지 않는 프로그램
-- `ott-provider-ids.json`에 등록되지 않은 OTT slug
-
-검색 결과가 없는 경우에는 유효한 검색 요청으로 보고 별도의 빈 상태 메시지를 표시합니다.
-
-## 데이터 모델
+`Movie`와 `TvShow`는 `Genre`, `WatchProvider`와 각각 다대다 관계입니다. 관계 테이블은 콘텐츠별 장르와 시청 제공자를 분리해 관리합니다.
 
 ```mermaid
 erDiagram
@@ -104,75 +79,6 @@ erDiagram
 		TvShow ||--o{ TvShowsOnWatchProviders : available_on
 		WatchProvider ||--o{ MoviesOnWatchProviders : provides
 		WatchProvider ||--o{ TvShowsOnWatchProviders : provides
-```
-
-주요 모델은 다음과 같습니다.
-
-- `Movie`: 영화 제목, 포스터, 예고편, 개봉일, 평점, 인기도
-- `TvShow`: TV 프로그램 제목, 포스터, 예고편, 첫 방영일, 평점, 인기도
-- `WatchProvider`: OTT 서비스 이름, 로고, 표시 우선순위
-- `Genre`: 영화 및 TV 프로그램 장르
-- `MoviesOnGenres`, `TvShowsOnGenres`: 콘텐츠와 장르의 다대다 관계
-- `MoviesOnWatchProviders`, `TvShowsOnWatchProviders`: 콘텐츠와 OTT의 다대다 관계
-
-## 라우팅
-
-| 경로                               | 설명                        |
-| ---------------------------------- | --------------------------- |
-| `/`                                | 전체 콘텐츠 홈 및 추천 섹션 |
-| `/netflix`                         | Netflix 콘텐츠 필터 페이지  |
-| `/disney-plus`                     | Disney+ 콘텐츠 필터 페이지  |
-| `/tving`                           | Tving 콘텐츠 필터 페이지    |
-| `/watcha`                          | Watcha 콘텐츠 필터 페이지   |
-| `/wavve`                           | Wavve 콘텐츠 필터 페이지    |
-| `/search?q=검색어`                 | 영화·TV 통합 검색 결과      |
-| `/program/[programId]?kind=movie`  | 영화 상세 페이지            |
-| `/program/[programId]?kind=tvshow` | TV 프로그램 상세 페이지     |
-
-## API
-
-| Method | Endpoint                  | 설명                                                           |
-| ------ | ------------------------- | -------------------------------------------------------------- |
-| GET    | `/api/getMovies`          | 인기순 영화 조회. `page`, `limit` 필수, `providerId` 필터 지원 |
-| GET    | `/api/getTvShows`         | 인기순 TV 프로그램 조회. `page`, `limit` 필수, 필터 지원       |
-| GET    | `/api/getProgramsByGenre` | 장르별 영화·TV 프로그램 조회. `genre` 필수                     |
-| GET    | `/api/getProgramById`     | `id`와 `kind` 기준 상세 조회                                   |
-| GET    | `/api/search`             | 제목 기준 영화·TV 통합 검색                                    |
-| GET    | `/api/cron/sync-tmdb`     | Bearer 인증으로 보호된 TMDB 콘텐츠 및 제공자 동기화            |
-
-장르 API는 영화와 TV를 구분할 수 있도록 다음 형태로 반환합니다.
-
-```json
-{
-  "movies": [{ "id": 1, "mediaType": "movie" }],
-  "tvShows": [{ "id": 2, "mediaType": "tvshow" }]
-}
-```
-
-## 프로젝트 구조
-
-```text
-src/
-├── app/
-│   ├── (with-searchBar)/       # 홈, OTT 필터, 검색 페이지
-│   ├── @modal/                 # 인터셉팅 라우트 기반 상세 모달
-│   ├── api/                    # Next.js Route Handler
-│   ├── components/             # 헤더, 캐러셀, 프로그램, 검색 UI
-│   ├── program/[programId]/    # 직접 접근 가능한 상세 페이지
-│   ├── not-found.tsx           # 공통 404 페이지
-│   └── types/                 # 화면 데이터 타입
-├── config/
-│   ├── genre.json              # 장르 목록
-│   └── ott-provider-ids.json   # OTT slug와 TMDB provider ID 매핑
-├── server/
-│   ├── contents.ts             # Prisma 기반 콘텐츠 조회 로직
-│   └── prisma.ts               # Prisma client singleton
-└── app/globals.css             # 전역 테마 및 dialog 스타일
-
-prisma/
-├── schema.prisma               # PostgreSQL 데이터 모델
-├── seed.ts                     # 초기 데이터 시드
-└── migrations/                 # 스키마 변경 이력
 ```
 
 ## 시작하기
@@ -191,9 +97,9 @@ cd reeltrailer-next
 npm install
 ```
 
-### 환경변수
+### 환경 변수
 
-프로젝트 루트에 `.env.local`을 생성합니다. 실제 키와 연결 문자열은 저장소에 커밋하지 않습니다.
+프로젝트 루트에 `.env.local` 파일을 만들고 아래 값을 설정합니다. `.env*` 파일은 Git에서 제외됩니다. 실제 키와 데이터베이스 연결 문자열은 커밋하지 마세요.
 
 ```env
 DATABASE_URL="postgresql://user:password@host:5432/database"
@@ -201,14 +107,21 @@ DIRECT_URL="postgresql://user:password@host:5432/database"
 TMDB_API_KEY="your-tmdb-api-key"
 CRON_SECRET_KEY="your-cron-secret"
 NEXT_PUBLIC_API_URL="http://localhost:3000/api"
-NEXT_PUBLIC_SITE_URL="https://your-domain.example"
+NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 ```
 
-`NEXT_PUBLIC_API_URL`은 캐러셀에서 사용하는 브라우저용 API 기준 주소입니다. 로컬 개발 환경에서는 위 값처럼 `/api`까지 포함해야 합니다.
-
-`NEXT_PUBLIC_SITE_URL`은 canonical URL, Open Graph, `robots.txt`, `sitemap.xml` 생성에 사용합니다. 배포 환경에서는 실제 서비스 도메인으로 설정합니다.
+| 변수                   | 용도                                                              |
+| ---------------------- | ----------------------------------------------------------------- |
+| `DATABASE_URL`         | 애플리케이션에서 사용하는 PostgreSQL 연결 문자열                  |
+| `DIRECT_URL`           | Prisma migration에 사용하는 직접 PostgreSQL 연결 문자열           |
+| `TMDB_API_KEY`         | TMDB 콘텐츠, 예고편, 제공자 정보 동기화                           |
+| `CRON_SECRET_KEY`      | 동기화 endpoint의 Bearer 인증 토큰                                |
+| `NEXT_PUBLIC_API_URL`  | 브라우저에서 캐러셀 API를 요청할 기준 URL. `/api`를 포함해야 함   |
+| `NEXT_PUBLIC_SITE_URL` | metadata, canonical URL, sitemap, robots 생성에 사용할 서비스 URL |
 
 ### 데이터베이스 준비
+
+로컬 개발에서는 migration을 생성·적용합니다.
 
 ```bash
 npx prisma generate
@@ -216,25 +129,54 @@ npx prisma migrate dev
 npx prisma db seed
 ```
 
-### 실행
+배포 환경에서는 이미 생성된 migration만 적용합니다.
 
 ```bash
-# 개발 서버
+npx prisma migrate deploy
+npx prisma db seed
+```
+
+시드는 영화와 TV 장르 기준 데이터를 등록합니다. 이후 Cron 동기화를 실행하거나 TMDB 데이터를 별도로 수집하면 탐색할 콘텐츠가 채워집니다.
+
+### 실행과 검사
+
+```bash
+# 개발 서버: http://localhost:3000
 npm run dev
 
-# 코드 검사
+# ESLint 검사
 npm run lint
 
-# 프로덕션 빌드 및 실행
+# Prisma Client 생성 후 프로덕션 빌드
 npm run build
+
+# 프로덕션 서버 실행
 npm start
 ```
 
-개발 서버는 [http://localhost:3000](http://localhost:3000)에서 확인할 수 있습니다.
+## API
 
-## 데이터 동기화
+| Method | Endpoint                  | Query parameter                          | 설명                               |
+| ------ | ------------------------- | ---------------------------------------- | ---------------------------------- |
+| `GET`  | `/api/getMovies`          | `page`, `limit` 필수; `providerId` 선택  | 인기순 영화 목록 반환              |
+| `GET`  | `/api/getTvShows`         | `page`, `limit`, `providerId` 선택       | 인기순 TV 프로그램 목록 반환       |
+| `GET`  | `/api/getProgramsByGenre` | `genre` 필수; `limit`, `providerId` 선택 | 장르별 영화와 TV 목록 반환         |
+| `GET`  | `/api/search`             | `q` 선택                                 | 제목을 대소문자 구분 없이 검색     |
+| `GET`  | `/api/getProgramById`     | `id`, `kind` 필수                        | 영화 또는 TV 프로그램 상세 반환    |
+| `GET`  | `/api/cron/sync-tmdb`     | 없음                                     | TMDB 동기화 실행, Bearer 인증 필요 |
 
-`/api/cron/sync-tmdb`는 Vercel Cron으로 호출되며, `vercel.json`에 다음 스케줄이 정의되어 있습니다.
+`kind`는 `movie` 또는 `tvshow`만 허용합니다. 검색은 유형별 최대 20개를 인기순으로 조회하며, 빈 검색어는 빈 배열을 반환합니다. 장르 API는 아래처럼 콘텐츠 유형별 배열을 반환합니다.
+
+```json
+{
+  "movies": [{ "id": 1, "mediaType": "movie" }],
+  "tvShows": [{ "id": 2, "mediaType": "tvshow" }]
+}
+```
+
+## TMDB 동기화
+
+`vercel.json`은 `/api/cron/sync-tmdb`를 매일 `18:00 UTC`에 실행합니다.
 
 ```json
 {
@@ -247,16 +189,43 @@ npm start
 }
 ```
 
-동기화 작업은 TMDB에서 인기 영화·TV 프로그램을 조회하고, 한국 지역에서 제공되는 OTT 정보와 예고편 키를 저장합니다. Cron 요청은 `CRON_SECRET_KEY`를 이용한 Bearer 인증이 필요합니다.
+동기화는 TMDB의 인기 영화와 TV 프로그램을 조회하고, 한국(`KR`)의 `flatrate` 제공자 정보와 예고편 키를 저장합니다. Cron 요청은 다음과 같이 `CRON_SECRET_KEY`와 일치하는 Authorization 헤더가 있어야 합니다.
 
-## 개선 예정
+```http
+Authorization: Bearer <CRON_SECRET_KEY>
+```
 
-- 콘텐츠 조회 로직과 UI 컴포넌트의 책임을 더 세분화
-- Prisma 결과를 화면 타입으로 변환하는 명시적 mapper 도입
-- 검색·상세·동기화 API의 통합 테스트 추가
-- 이미지 로딩 및 캐시 전략 고도화
-- 사용자 로그인과 관심 콘텐츠 저장 기능 추가
+Vercel 배포 시 `DATABASE_URL`, `DIRECT_URL`, `TMDB_API_KEY`, `CRON_SECRET_KEY`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SITE_URL`을 프로젝트 환경 변수에 설정해야 합니다.
 
-## 라이선스 및 데이터 출처
+## 프로젝트 구조
 
-이 프로젝트의 콘텐츠 메타데이터와 이미지는 TMDB API를 통해 제공됩니다. 실제 서비스 배포 시 TMDB의 이용 약관과 이미지 사용 정책을 확인해야 합니다.
+```text
+src/
+├── app/
+│   ├── (with-searchBar)/       # 홈, OTT 필터, 검색 페이지
+│   ├── @modal/                 # 인터셉팅 라우트 상세 모달
+│   ├── api/                    # Route Handlers
+│   ├── components/             # 헤더, 캐러셀, 검색, 콘텐츠 UI
+│   ├── program/[programId]/    # 직접 접근하는 상세 페이지
+│   ├── provider.tsx            # TanStack Query provider
+│   ├── robots.ts, sitemap.ts   # SEO metadata routes
+│   └── types/                  # 화면용 타입
+├── config/                     # 장르와 OTT provider ID 매핑
+└── server/                     # Prisma singleton과 콘텐츠 조회 로직
+
+prisma/
+├── schema.prisma               # PostgreSQL 데이터 모델
+├── migrations/                 # migration 이력
+└── seed.ts                     # 장르 초기 데이터
+```
+
+## 제약 사항
+
+- OTT 제공 정보는 TMDB가 한국 지역에서 구독형(`flatrate`)으로 제공하는 항목만 대상으로 합니다. 대여·구매 제공자는 포함하지 않습니다.
+- 콘텐츠와 예고편의 제공 여부는 TMDB와 YouTube의 지역·메타데이터 상태에 영향을 받습니다.
+- 검색 결과는 현재 페이지네이션을 제공하지 않으며, 각 유형별 최대 20개를 반환합니다.
+- 지원 OTT는 Netflix, Disney+, Tving, Watcha, Wavve입니다.
+
+## 데이터 출처
+
+콘텐츠 메타데이터와 이미지는 TMDB API를 통해 제공됩니다. 배포 전 TMDB 이용 약관과 이미지 사용 정책을 확인하세요.
