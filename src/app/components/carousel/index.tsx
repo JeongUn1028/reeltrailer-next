@@ -12,20 +12,18 @@ import constants from "../../../config/ott-provider-ids.json";
 //* url 생성 함수
 function buildUrl(ott: string | undefined) {
   const params = new URLSearchParams();
-
   params.append("page", "1");
   params.append("limit", "20");
 
   if (ott) {
     const ottName = ott as keyof typeof constants;
     const providerId = constants[ottName];
-
     if (providerId) {
       params.append("providerId", providerId as string);
     }
   }
 
-  return `/api/getMovies?${params.toString()}`;
+  return `${process.env.NEXT_PUBLIC_API_URL}/api/getMovies?${params.toString()}`;
 }
 
 //* 영화 정보를 가져오는 함수
