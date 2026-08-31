@@ -1,7 +1,7 @@
 import Program from "./program";
 import styles from "./index.module.css";
 import genres from "@/config/genre.json";
-import { getMovies, getTvShows, getProgramsByGenre } from "@/server/contents";
+import { getProgramsByGenre, getProgramList } from "@/server/contents";
 import { ProgramType } from "@/app/types/types";
 
 const getPrograms = async (
@@ -11,22 +11,15 @@ const getPrograms = async (
   try {
     const parsedProviderId = providerId ? Number(providerId) : undefined;
 
-    if (title === "영화") {
-      const movies = await getMovies({
-        page: 1,
-        limit: 20,
-        providerId: parsedProviderId,
-      });
-      return movies;
+    if (
+      (title === "영화" || title === "프로그램") &&
+      parsedProviderId !== undefined
+    ) {
+      const newTitle = title === "영화" ? "movie" : "tvshow";
+      const programs = await getProgramList(parsedProviderId, newTitle, 20, 1);
+      return programs;
     }
-    if (title === "프로그램") {
-      const tvShows = await getTvShows({
-        page: 1,
-        limit: 20,
-        providerId: parsedProviderId,
-      });
-      return tvShows;
-    }
+
     const programs = await getProgramsByGenre({
       genreIds: genres.find((genre) => genre.name === title)?.id,
       limit: 20,

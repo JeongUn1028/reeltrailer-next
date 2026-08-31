@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import ProgramDetail from "@/app/components/programs/programDetail";
 import styles from "@/app/components/programs/programDetail.module.css";
 import { isValidKind } from "@/app/lib/isValidKind";
-import { getMovieById, getTvShowById } from "@/server/contents";
+import { getProgramById } from "@/server/contents";
 
 type PageProps = {
   params: Promise<{ programId: string }>;
@@ -21,11 +21,7 @@ export async function generateMetadata({
     return { title: "프로그램을 찾을 수 없습니다", robots: { index: false } };
   }
 
-  const program =
-    kind === "movie"
-      ? await getMovieById(Number(programId))
-      : await getTvShowById(Number(programId));
-
+  const program = await getProgramById(Number(programId), kind);
   if (!program) {
     return { title: "프로그램을 찾을 수 없습니다", robots: { index: false } };
   }

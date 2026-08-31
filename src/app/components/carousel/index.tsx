@@ -23,7 +23,7 @@ function buildUrl(ott: string | undefined) {
     }
   }
 
-  return `${process.env.NEXT_PUBLIC_API_URL}/api/getMovies?${params.toString()}`;
+  return `${process.env.NEXT_PUBLIC_API_URL}/getMovies?${params.toString()}`;
 }
 
 //* 영화 정보를 가져오는 함수

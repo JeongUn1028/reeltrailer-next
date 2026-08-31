@@ -2,7 +2,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { ProgramType } from "@/app/types/types";
 import { normalizeProviderName } from "@/app/lib/normalizeProviderName";
-import { getMovieById, getTvShowById } from "@/server/contents";
+import { getProgramById } from "@/server/contents";
 import styles from "./programDetail.module.css";
 
 interface ProgramDetailViewProps {
@@ -30,10 +30,7 @@ const fetchProgramById = async (
     notFound();
   }
   try {
-    const program =
-      kind === "movie"
-        ? await getMovieById(Number(programId))
-        : await getTvShowById(Number(programId));
+    const program = await getProgramById(Number(programId), kind);
     if (!program) {
       notFound();
     }
