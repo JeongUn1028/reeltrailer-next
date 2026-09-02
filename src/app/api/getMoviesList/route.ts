@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getMovies } from "@/server/contents";
+import { getMoviesList } from "@/server/contents";
 
 export async function GET(request: Request) {
   try {
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     const providerIdParam = searchParams.get("providerId");
     const providerId = Number(providerIdParam) || undefined;
 
-    const movies = await getMovies({ page, limit, providerId });
+    const movies = await getMoviesList({ page, limit, providerId });
 
     return NextResponse.json({ movies }, { status: 200, statusText: "OK" });
   } catch (error) {

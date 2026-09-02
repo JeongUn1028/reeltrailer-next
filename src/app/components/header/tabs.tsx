@@ -11,7 +11,14 @@ export default function Tabs() {
   const getOttPath = (ott: string) =>
     ott === "All" ? "/" : `/${ott.toLowerCase().replace("+", "-plus")}`;
 
-  const activeOtt = otts.find((ott) => getOttPath(ott) === pathname) ?? "All";
+  const activeOtt =
+    otts.find((ott) => {
+      const ottPath = getOttPath(ott);
+      return (
+        ottPath === pathname ||
+        (ottPath !== "/" && pathname.startsWith(`${ottPath}/`))
+      );
+    }) ?? "All";
 
   const onClickOtt = (ott: string) => {
     router.push(getOttPath(ott));

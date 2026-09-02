@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getTvShows } from "@/server/contents";
+import { getTvShowsList } from "@/server/contents";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -18,6 +18,6 @@ export async function GET(request: Request) {
     );
   }
 
-  const tvShows = await getTvShows({ page, limit, providerId });
+  const tvShows = await getTvShowsList({ page, limit, providerId });
   return NextResponse.json({ tvShows });
 }

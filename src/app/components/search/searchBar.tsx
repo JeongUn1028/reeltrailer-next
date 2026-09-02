@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 
 import styles from "./searchBar.module.css";
 
@@ -24,6 +24,8 @@ export default function SearchBar() {
 }
 
 function SearchInput({ initialSearch }: { initialSearch: string }) {
+  const { ott } = useParams<{ ott?: string }>();
+
   const router = useRouter();
   const [search, setSearch] = useState(initialSearch);
 
@@ -34,7 +36,10 @@ function SearchInput({ initialSearch }: { initialSearch: string }) {
   const onSubmit = () => {
     const trimmedSearch = search.trim();
     if (!trimmedSearch) return;
-    router.push(`/search?q=${encodeURIComponent(trimmedSearch)}`);
+    const searchPath = ott
+      ? `/${ott}/search?q=${encodeURIComponent(trimmedSearch)}`
+      : `/search?q=${encodeURIComponent(trimmedSearch)}`;
+    router.push(searchPath);
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

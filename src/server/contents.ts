@@ -31,7 +31,7 @@ export interface GetContentsParams {
 }
 
 //* 영화 목록 조회
-export async function getMovies({
+export async function getMoviesList({
   providerId,
   limit = 20,
   page = 1,
@@ -71,7 +71,7 @@ export async function getMovies({
 }
 
 //* TV 프로그램 목록 조회
-export async function getTvShows({
+export async function getTvShowsList({
   providerId,
   limit = 20,
   page = 1,
@@ -117,9 +117,9 @@ export async function getProgramList(
   page = 1,
 ): Promise<ProgramType[] | null> {
   if (kind === "movie") {
-    return getMovies({ providerId, limit, page });
+    return getMoviesList({ providerId, limit, page });
   } else if (kind === "tvshow") {
-    return getTvShows({ providerId, limit, page });
+    return getTvShowsList({ providerId, limit, page });
   }
   return null;
 }
@@ -193,7 +193,7 @@ export async function getProgramById(
 }
 
 //* 검색
-export async function searchPrograms(query: string) {
+export async function searchPrograms(query: string, providerId?: number) {
   //* 검색어가 없거나 공백인 경우
   if (!query || query.trim() === "") {
     return [];
@@ -205,6 +205,7 @@ export async function searchPrograms(query: string) {
         contains: query,
         mode: "insensitive",
       },
+      providers: providerId ? { some: { providerId } } : {},
     },
     select: {
       id: true,
@@ -235,6 +236,7 @@ export async function searchPrograms(query: string) {
         contains: query,
         mode: "insensitive",
       },
+      providers: providerId ? { some: { providerId } } : {},
     },
     select: {
       id: true,

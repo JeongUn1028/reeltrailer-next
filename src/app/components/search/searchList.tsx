@@ -1,14 +1,18 @@
 import { searchPrograms } from "@/server/contents";
+import { nameToProviderId } from "@/app/lib/nameToProviderId";
 import type { ProgramType } from "@/app/types/types";
 import Program from "@/app/components/programs/program";
 import styles from "./searchList.module.css";
 
 export default async function SearchResults({
   searchParams,
+  params,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; ott?: string }>;
+  params?: Promise<{ ott?: string }>;
 }) {
   const { q } = await searchParams;
+  const { ott } = params ? await params : { ott: undefined };
   const query = q?.trim();
 
   if (!query) {
@@ -31,8 +35,8 @@ export default async function SearchResults({
       </main>
     );
   }
-
-  const programs: ProgramType[] = await searchPrograms(query);
+  const providerId = ott ? nameToProviderId(ott) : undefined;
+  const programs: ProgramType[] = await searchPrograms(query, providerId);
   return (
     <main className={styles.page}>
       <section
