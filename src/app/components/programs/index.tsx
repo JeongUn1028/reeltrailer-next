@@ -18,6 +18,13 @@ const getPrograms = async (
       const newTitle = title === "영화" ? "movie" : "tvshow";
       const programs = await getProgramList(parsedProviderId, newTitle, 20, 1);
       return programs;
+    } else if (
+      (title === "영화" || title === "프로그램") &&
+      parsedProviderId === undefined
+    ) {
+      const newTitle = title === "영화" ? "movie" : "tvshow";
+      const programs = await getProgramList(Number("000"), newTitle, 20, 1);
+      return programs;
     }
 
     const programs = await getProgramsByGenre({

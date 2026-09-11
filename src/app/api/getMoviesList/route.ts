@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     const page = Number(searchParams.get("page") ?? "1");
     const limit = Number(searchParams.get("limit") ?? "20");
     const providerIdParam = searchParams.get("providerId");
-    const providerId = Number(providerIdParam) || undefined;
+    const providerId = providerIdParam ? Number(providerIdParam) : undefined;
 
     const movies = await getMoviesList({ page, limit, providerId });
 

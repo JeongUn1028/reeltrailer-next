@@ -30,6 +30,22 @@ export interface GetContentsParams {
   page?: number;
 }
 
+//* 특정 프로그램 목록 조회
+
+export async function getProgramList(
+  providerId: number,
+  kind: "movie" | "tvshow",
+  limit = 20,
+  page = 1,
+): Promise<ProgramType[] | null> {
+  if (kind === "movie") {
+    return getMoviesList({ providerId, limit, page });
+  } else if (kind === "tvshow") {
+    return getTvShowsList({ providerId, limit, page });
+  }
+  return null;
+}
+
 //* 영화 목록 조회
 export async function getMoviesList({
   providerId,
@@ -42,9 +58,11 @@ export async function getMoviesList({
   >[]
 > {
   const skip = (page - 1) * limit;
+  const whereCodition =
+    providerId === Number("000") ? {} : { providers: { some: { providerId } } };
 
   const movies = await prisma.movie.findMany({
-    where: providerId ? { providers: { some: { providerId } } } : {},
+    where: whereCodition,
     select: {
       id: true,
       title: true,
@@ -82,8 +100,10 @@ export async function getTvShowsList({
   >[]
 > {
   const skip = (page - 1) * limit;
+  const whereCodition =
+    providerId === Number("000") ? {} : { providers: { some: { providerId } } };
   const tvShows = await prisma.tvShow.findMany({
-    where: providerId ? { providers: { some: { providerId } } } : {},
+    where: whereCodition,
     select: {
       id: true,
       title: true,
@@ -106,22 +126,6 @@ export async function getTvShowsList({
     mediaType: "tvshow" as const,
     providers: tvShow.providers.map((p) => p.provider),
   }));
-}
-
-//* 특정 프로그램 목록 조회
-
-export async function getProgramList(
-  providerId: number,
-  kind: "movie" | "tvshow",
-  limit = 20,
-  page = 1,
-): Promise<ProgramType[] | null> {
-  if (kind === "movie") {
-    return getMoviesList({ providerId, limit, page });
-  } else if (kind === "tvshow") {
-    return getTvShowsList({ providerId, limit, page });
-  }
-  return null;
 }
 
 //* 특정 영화 상세 조회
