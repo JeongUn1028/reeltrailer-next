@@ -25,14 +25,14 @@ const TMDB_GENRES = [
   { id: 10752, name: "전쟁" },
   { id: 37, name: "서부" },
   // TV 전용 장르
-  { id: 10759, name: "Action & Adventure" },
-  { id: 10762, name: "Kids" },
-  { id: 10763, name: "News" },
-  { id: 10764, name: "Reality" },
-  { id: 10765, name: "Sci-Fi & Fantasy" },
-  { id: 10766, name: "Soap" },
-  { id: 10767, name: "Talk" },
-  { id: 10768, name: "War & Politics" },
+  { id: 10759, name: "액션 & 어드벤처" },
+  { id: 10762, name: "키즈" },
+  { id: 10763, name: "뉴스" },
+  { id: 10764, name: "리얼리티" },
+  { id: 10765, name: "SF & 판타지" },
+  { id: 10766, name: "연속극" },
+  { id: 10767, name: "토크" },
+  { id: 10768, name: "전쟁 & 정치" },
 ];
 
 async function main() {

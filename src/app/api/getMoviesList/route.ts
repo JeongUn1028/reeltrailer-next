@@ -1,38 +1,36 @@
-import { NextResponse } from "next/server";
-import { getMoviesList } from "@/server/contents";
+import { getPrograms } from "@/server/contents";
+import { isProgramSortKey } from "@/app/types/types";
+import { jsonError, jsonWithCache, parsePositiveInt } from "@/app/lib/apiResponse";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    if (!searchParams.has("page") || isNaN(Number(searchParams.get("page")))) {
-      return NextResponse.json(
-        { error: "Missing or invalid required query parameter: page" },
-        { status: 400 },
-      );
+    const page = parsePositiveInt(searchParams.get("page"), 1);
+    const limit = parsePositiveInt(searchParams.get("limit"), 20);
+    const providerId = parsePositiveInt(searchParams.get("providerId"));
+    const sortParam = searchParams.get("sort") ?? "popular";
+
+    if (page === null || limit === null) {
+      return jsonError("page와 limit은 양의 정수여야 합니다.", 400);
     }
-    if (
-      !searchParams.has("limit") ||
-      isNaN(Number(searchParams.get("limit")))
-    ) {
-      return NextResponse.json(
-        { error: "Missing or invalid required query parameter: limit" },
-        { status: 400 },
-      );
+    if (providerId === null) {
+      return jsonError("providerId는 양의 정수여야 합니다.", 400);
+    }
+    if (!isProgramSortKey(sortParam)) {
+      return jsonError("sort는 popular | latest | rating 중 하나여야 합니다.", 400);
     }
 
-    const page = Number(searchParams.get("page") ?? "1");
-    const limit = Number(searchParams.get("limit") ?? "20");
-    const providerIdParam = searchParams.get("providerId");
-    const providerId = providerIdParam ? Number(providerIdParam) : undefined;
+    const { items, total } = await getPrograms({
+      kind: "movie",
+      providerId,
+      page,
+      limit,
+      sort: sortParam,
+    });
 
-    const movies = await getMoviesList({ page, limit, providerId });
-
-    return NextResponse.json({ movies }, { status: 200, statusText: "OK" });
+    return jsonWithCache({ movies: items, total, page, limit });
   } catch (error) {
     console.error("[API] 영화 조회 에러:", error);
-    return NextResponse.json(
-      { error: "영화를 가져오는 중 에러가 발생했습니다." },
-      { status: 500 },
-    );
+    return jsonError("영화를 가져오는 중 에러가 발생했습니다.", 500);
   }
 }

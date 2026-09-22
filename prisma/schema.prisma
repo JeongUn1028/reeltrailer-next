@@ -5,57 +5,66 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "library"
 }
+
 // -------------------------
 // 영화
 // -------------------------
 model Movie {
-  id            Int                      @id // TMDB Movie ID
+  id            Int       @id // TMDB Movie ID
   title         String
   originalTitle String?
-  overview      String?                  @db.Text
+  overview      String?   @db.Text
   posterPath    String?
   backdropPath  String?
-  trailerKey    String?                  
+  trailerKey    String?
   releaseDate   DateTime?
-  voteAverage   Float                    @default(0.0)
-  voteCount     Int                      @default(0)
-  popularity    Float                    @default(0.0)
-  updatedAt     DateTime                 @updatedAt
-  createdAt     DateTime                 @default(now())
+  voteAverage   Float     @default(0.0)
+  voteCount     Int       @default(0)
+  popularity    Float     @default(0.0)
+  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime  @default(now())
 
-  genres        MoviesOnGenres[]
-  providers     MoviesOnWatchProviders[]
+  genres    MoviesOnGenres[]
+  providers MoviesOnWatchProviders[]
 
   @@index([popularity])
   @@index([releaseDate])
+  @@index([updatedAt])
+  // 제목 부분 일치 검색용 pg_trgm GIN 인덱스 (확장 생성은 migration SQL에서 처리)
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Movie_title_trgm_idx")
+  @@index([originalTitle(ops: raw("gin_trgm_ops"))], type: Gin, map: "Movie_originalTitle_trgm_idx")
 }
+
 // -------------------------
 // OTT 프로그램
 // -------------------------
 
 model TvShow {
-  id                Int         @id// TMDB TV ID
-  title             String
-  originalTitle     String?
-  overview          String?     @db.Text
-  posterPath        String?
-  backdropPath      String?
-  trailerKey        String?      
-  firstAirDate      DateTime?
-  voteAverage       Float       @default(0.0)
-  voteCount         Int         @default(0)
-  popularity        Float       @default(0.0)
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  id            Int       @id // TMDB TV ID
+  title         String
+  originalTitle String?
+  overview      String?   @db.Text
+  posterPath    String?
+  backdropPath  String?
+  trailerKey    String?
+  firstAirDate  DateTime?
+  voteAverage   Float     @default(0.0)
+  voteCount     Int       @default(0)
+  popularity    Float     @default(0.0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  genres            TvShowsOnGenres[]
-  providers         TvShowsOnWatchProviders[]
+  genres    TvShowsOnGenres[]
+  providers TvShowsOnWatchProviders[]
 
   @@index([popularity])
   @@index([firstAirDate])
+  @@index([updatedAt])
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "TvShow_title_trgm_idx")
+  @@index([originalTitle(ops: raw("gin_trgm_ops"))], type: Gin, map: "TvShow_originalTitle_trgm_idx")
 }
 
 // -------------------------
@@ -64,15 +73,15 @@ model TvShow {
 // -------------------------
 
 model WatchProvider {
-  id              Int       @id // TMDB Provider ID (예: 8=Netflix)
+  id              Int      @id // TMDB Provider ID (예: 8=Netflix)
   providerName    String
   logoPath        String?
-  displayPriority Int       @default(0)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @default(now())
+  displayPriority Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now())
 
-  movies          MoviesOnWatchProviders[]
-  tvShows         TvShowsOnWatchProviders[]
+  movies  MoviesOnWatchProviders[]
+  tvShows TvShowsOnWatchProviders[]
 }
 
 // -------------------------
@@ -80,9 +89,9 @@ model WatchProvider {
 // -------------------------
 
 model MoviesOnWatchProviders {
-  movieId Int
+  movieId    Int
   providerId Int
-  movie Movie   @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  movie      Movie         @relation(fields: [movieId], references: [id], onDelete: Cascade)
   provider   WatchProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
 
   @@id([movieId, providerId])
@@ -94,22 +103,21 @@ model MoviesOnWatchProviders {
 // N:M 관계 테이블 (TvShow <-> WatchProvider)
 // -------------------------
 model TvShowsOnWatchProviders {
-  tvShowId  Int
+  tvShowId   Int
   providerId Int
-  tvShow    TvShow        @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
-  provider  WatchProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  tvShow     TvShow        @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+  provider   WatchProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
 
   @@id([tvShowId, providerId])
   @@index([tvShowId])
   @@index([providerId])
 }
 
-
 // 장르 데이터
 model Genre {
-  id     Int              @id // TMDB Genre ID
-  name   String
-  movies MoviesOnGenres[]
+  id      Int               @id // TMDB Genre ID
+  name    String
+  movies  MoviesOnGenres[]
   tvShows TvShowsOnGenres[]
 }
 
@@ -132,4 +140,3 @@ model TvShowsOnGenres {
 
   @@id([tvShowId, genreId])
 }
-

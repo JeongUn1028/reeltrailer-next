@@ -1,55 +1,45 @@
-import { NextRequest, NextResponse } from "next/server";
 import genres from "@/config/genre.json";
-import { getProgramsByGenre } from "@/server/contents";
+import { getPrograms } from "@/server/contents";
+import { isProgramSortKey } from "@/app/types/types";
+import { jsonError, jsonWithCache, parsePositiveInt } from "@/app/lib/apiResponse";
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const genreParam = searchParams.get("genre");
-    const limit = parseInt(searchParams.get("limit") || "20", 10);
-    const providerIdParam = searchParams.get("providerId");
-    const providerId = providerIdParam ? Number(providerIdParam) : undefined;
+    const limit = parsePositiveInt(searchParams.get("limit"), 20);
+    const providerId = parsePositiveInt(searchParams.get("providerId"));
+    const sortParam = searchParams.get("sort") ?? "popular";
 
-    // 파라미터 유효성 검사
     if (!genreParam) {
-      return NextResponse.json(
-        { message: "genre 파라미터가 필요합니다." },
-        { status: 400 },
-      );
+      return jsonError("genre 파라미터가 필요합니다.", 400);
+    }
+    if (limit === null) {
+      return jsonError("limit은 양의 정수여야 합니다.", 400);
+    }
+    if (providerId === null) {
+      return jsonError("providerId는 양의 정수여야 합니다.", 400);
+    }
+    if (!isProgramSortKey(sortParam)) {
+      return jsonError("sort는 popular | latest | rating 중 하나여야 합니다.", 400);
     }
 
-    if (
-      (providerIdParam !== null && !Number.isInteger(providerId)) ||
-      (providerId !== undefined && providerId <= 0)
-    ) {
-      return NextResponse.json(
-        { message: "providerId는 양의 정수여야 합니다." },
-        { status: 400 },
-      );
+    // 장르 이름 또는 ID 모두 허용
+    const genre =
+      genres.find((g) => g.name === genreParam) ??
+      genres.find((g) => String(g.id) === genreParam);
+    if (!genre) {
+      return jsonError("유효한 장르명을 입력해 주세요.", 400);
     }
 
-    const genreIds = genres.find((genre) => genre.name === genreParam)?.id;
+    const [movies, tvShows] = await Promise.all([
+      getPrograms({ kind: "movie", genreId: genre.id, providerId, limit, sort: sortParam }),
+      getPrograms({ kind: "tvshow", genreId: genre.id, providerId, limit, sort: sortParam }),
+    ]);
 
-    if (!genreIds) {
-      return NextResponse.json(
-        { message: "유효한 장르명을 입력해 주세요." },
-        { status: 400 },
-      );
-    }
-
-    // Server 쿼리 모듈 호출
-    const result = await getProgramsByGenre({
-      genreIds,
-      providerIds: providerId,
-      limit,
-    });
-
-    return NextResponse.json(result);
+    return jsonWithCache({ movies: movies.items, tvShows: tvShows.items });
   } catch (error) {
     console.error("[API] 장르별 조회 에러:", error);
-    return NextResponse.json(
-      { message: "장르별 콘텐츠를 가져오는 중 에러가 발생했습니다." },
-      { status: 500 },
-    );
+    return jsonError("장르별 콘텐츠를 가져오는 중 에러가 발생했습니다.", 500);
   }
 }
