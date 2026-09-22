@@ -1,7 +1,8 @@
 .link {
   display: block;
   flex-shrink: 0;
-  width: 200px;
+  /* 화면 폭에 따라 160~220px. 넓은 화면에서 한 행에 더 많이 보이도록 */
+  width: clamp(160px, 13.5vw, 220px);
   border-radius: 0.5rem;
   color: inherit;
   text-decoration: none;
@@ -19,12 +20,27 @@
     box-shadow var(--duration-base) var(--ease-out);
 }
 
+.posterBox {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
 .image,
 .fallback {
   width: 100%;
   aspect-ratio: 2 / 3;
   border-radius: 0.5rem;
   overflow: hidden;
+}
+
+/* 포스터 좌하단 OTT 배지 */
+.badges {
+  position: absolute;
+  bottom: 0.4rem;
+  left: 0.4rem;
 }
 
 .image {

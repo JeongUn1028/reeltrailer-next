@@ -1,0 +1,28 @@
+.list {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.badge {
+  display: grid;
+  min-width: 1.5rem;
+  height: 1.35rem;
+  padding: 0 0.35rem;
+  place-items: center;
+  border-radius: 0.3rem;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.netflix { background: #e50914; }
+.disney { background: #113ccf; }
+.tving { background: #ff153c; }
+.watcha { background: #ff0558; }
+.wavve { background: #1351f9; }
+.more { background: rgba(20, 20, 20, 0.85); color: #ddd; }

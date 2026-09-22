@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Program from "./program";
+import ScrollRow from "./scroll-row";
 import type { ProgramSummary } from "@/app/types/types";
 import styles from "./program-row.module.css";
 
@@ -32,7 +33,7 @@ export default function ProgramRow({
           </Link>
         )}
       </div>
-      <div className={styles.programContainer}>
+      <ScrollRow label={title}>
         {programs.map((program, index) => (
           <Program
             key={`${program.mediaType}-${program.id}`}
@@ -40,7 +41,7 @@ export default function ProgramRow({
             priority={index < priorityCount}
           />
         ))}
-      </div>
+      </ScrollRow>
     </section>
   );
 }

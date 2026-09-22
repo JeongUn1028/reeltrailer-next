@@ -170,3 +170,100 @@ export function selectTrailerPrograms(
   }
   return result;
 }
+
+// -------------------------
+// 홈 추천 행 구성
+// -------------------------
+
+export interface RecommendRow {
+  key: string;
+  title: string;
+  programs: ProgramSummary[];
+  /** 장르 행이면 장르 ID */
+  genreId?: number;
+}
+
+export interface BuildRecommendRowsOptions {
+  providerId?: number;
+  kind?: ProgramKindFilter;
+  sort?: ProgramSortKey;
+  /** 행당 카드 수 */
+  rowLimit?: number;
+  /** 장르 행 최대 개수 */
+  genreRowCount?: number;
+  /** 이 개수 미만인 장르 행은 숨김 */
+  minGenreRowSize?: number;
+  /** 신작 행 기간(일) */
+  recentDays?: number;
+  now?: Date;
+  /** 장르 표시 이름 (없으면 카탈로그의 이름) */
+  genreLabel?: (id: number, fallback: string) => string;
+}
+
+const programKey = (p: ProgramSummary) => `${p.mediaType}-${p.id}`;
+
+//* 홈 추천 행을 한 번에 구성한다.
+//* - 신작: 최근 N일 안에서 인기순, 포스터 없는 항목 제외
+//* - 영화/TV: 조건·정렬 반영
+//* - 장르: 앞 행에 이미 나온 작품은 제외해 행 간 중복을 줄인다
+export function buildRecommendRows(
+  catalog: Catalog,
+  {
+    providerId,
+    kind = "all",
+    sort = "popular",
+    rowLimit = 16,
+    genreRowCount = 10,
+    minGenreRowSize = 4,
+    recentDays = 45,
+    now = new Date(),
+    genreLabel = (_id, fallback) => fallback,
+  }: BuildRecommendRowsOptions = {},
+): RecommendRow[] {
+  const rows: RecommendRow[] = [];
+  const shown = new Set<string>();
+  const remember = (programs: ProgramSummary[]) => {
+    for (const p of programs) shown.add(programKey(p));
+    return programs;
+  };
+
+  // 1) 신작: 기간 안의 항목을 인기순으로
+  const recent = getRecentReleases(catalog, { providerId, days: recentDays, limit: Number.MAX_SAFE_INTEGER, now })
+    .filter((p) => (kind === "all" || p.mediaType === kind) && p.posterPath);
+  const recentRow = sortPrograms(recent, "popular").slice(0, rowLimit);
+  if (recentRow.length > 0) {
+    rows.push({ key: "recent", title: "최근 공개된 신작", programs: remember(recentRow) });
+  }
+
+  // 2) 영화 / TV
+  if (kind !== "tvshow") {
+    const movies = queryCatalog(catalog, { providerId, kind: "movie", sort, limit: rowLimit }).items;
+    if (movies.length > 0) rows.push({ key: "movies", title: "추천하는 영화", programs: remember(movies) });
+  }
+  if (kind !== "movie") {
+    const tvShows = queryCatalog(catalog, { providerId, kind: "tvshow", sort, limit: rowLimit }).items;
+    if (tvShows.length > 0) rows.push({ key: "tvshows", title: "추천하는 TV 프로그램", programs: remember(tvShows) });
+  }
+
+  // 3) 장르: 데이터가 많은 장르부터, 이미 보여준 작품은 제외
+  for (const genre of getAvailableGenres(catalog, providerId)) {
+    if (rows.filter((r) => r.genreId !== undefined).length >= genreRowCount) break;
+    const candidates = queryCatalog(catalog, {
+      providerId,
+      kind,
+      genreId: genre.id,
+      sort,
+      limit: Number.MAX_SAFE_INTEGER,
+    }).items.filter((p) => !shown.has(programKey(p)));
+    const programs = candidates.slice(0, rowLimit);
+    if (programs.length < minGenreRowSize) continue;
+    rows.push({
+      key: `genre-${genre.id}`,
+      title: `${genreLabel(genre.id, genre.name)} 장르`,
+      programs: remember(programs),
+      genreId: genre.id,
+    });
+  }
+
+  return rows;
+}

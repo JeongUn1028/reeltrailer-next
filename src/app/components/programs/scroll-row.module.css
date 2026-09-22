@@ -1,0 +1,106 @@
+.wrapper {
+  position: relative;
+}
+
+.track {
+  display: flex;
+  flex-direction: row;
+  gap: var(--row-gap, 1.5rem);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  padding: 1rem 0;
+  /* 카드가 가장자리에서 잘리지 않도록 카드 시작점에 스냅 */
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(229, 9, 20, 0.9) rgba(255, 255, 255, 0.1);
+  scrollbar-gutter: stable;
+}
+
+.track > * {
+  scroll-snap-align: start;
+}
+
+.track::-webkit-scrollbar {
+  height: 0.25rem;
+}
+
+.track::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.track::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: #e50914;
+  background-clip: padding-box;
+}
+
+.arrow {
+  /* 행(RevealRow)의 content-visibility가 paint containment를 걸어 행 밖은 그려지지 않으므로
+     버튼은 행 안쪽 가장자리에 겹쳐 둔다 (Netflix식 오버레이) */
+  position: absolute;
+  z-index: 2;
+  top: 1rem;
+  bottom: 1rem;
+  display: grid;
+  width: 2.5rem;
+  place-items: center;
+  border: 0;
+  color: #fff;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+
+.prev {
+  left: 0;
+  border-radius: 0.5rem 0 0 0.5rem;
+  background: linear-gradient(90deg, rgba(10, 10, 10, 0.92), rgba(10, 10, 10, 0.55));
+}
+
+.next {
+  right: 0;
+  border-radius: 0 0.5rem 0.5rem 0;
+  background: linear-gradient(270deg, rgba(10, 10, 10, 0.92), rgba(10, 10, 10, 0.55));
+}
+
+/* 행에 마우스를 올리거나 버튼에 포커스가 가면 표시 (비활성 버튼은 계속 숨김) */
+.wrapper:hover .arrow:not(:disabled),
+.arrow:focus-visible {
+  opacity: 1;
+}
+
+.arrow:hover:not(:disabled),
+.arrow:focus-visible {
+  background: rgba(229, 9, 20, 0.92);
+  outline: none;
+}
+
+.arrow:disabled {
+  cursor: default;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 터치 기기에서는 스와이프가 자연스러우므로 버튼 숨김 */
+@media (hover: none) {
+  .arrow {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .track {
+    gap: 1rem;
+  }
+}

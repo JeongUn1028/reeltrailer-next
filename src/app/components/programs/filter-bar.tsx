@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { ProgramKindFilter, ProgramSortKey } from "@/app/types/types";
+import FilterChip from "./filter-chip";
 import styles from "./filter-bar.module.css";
 
 export const KIND_LABELS: Record<ProgramKindFilter, string> = {
@@ -27,28 +27,16 @@ export default function FilterBar({ kind, sort, buildHref }: FilterBarProps) {
     <div className={styles.bar}>
       <div className={styles.group} role="group" aria-label="콘텐츠 유형">
         {(Object.keys(KIND_LABELS) as ProgramKindFilter[]).map((key) => (
-          <Link
-            key={key}
-            href={buildHref({ kind: key })}
-            className={`${styles.chip} ${kind === key ? styles.active : ""}`}
-            aria-current={kind === key ? "true" : undefined}
-            scroll={false}
-          >
+          <FilterChip key={key} href={buildHref({ kind: key })} active={kind === key}>
             {KIND_LABELS[key]}
-          </Link>
+          </FilterChip>
         ))}
       </div>
       <div className={styles.group} role="group" aria-label="정렬">
         {(Object.keys(SORT_LABELS) as ProgramSortKey[]).map((key) => (
-          <Link
-            key={key}
-            href={buildHref({ sort: key })}
-            className={`${styles.chip} ${sort === key ? styles.active : ""}`}
-            aria-current={sort === key ? "true" : undefined}
-            scroll={false}
-          >
+          <FilterChip key={key} href={buildHref({ sort: key })} active={sort === key}>
             {SORT_LABELS[key]}
-          </Link>
+          </FilterChip>
         ))}
       </div>
     </div>

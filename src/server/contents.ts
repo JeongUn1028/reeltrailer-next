@@ -19,6 +19,7 @@ import {
 import { buildOrderBy, buildWhere } from "@/server/program-query";
 
 export {
+  buildRecommendRows,
   getAvailableGenres,
   getRecentReleases,
   mergeTypedPages,
@@ -27,6 +28,7 @@ export {
   sortPrograms,
   type Catalog,
   type ProgramQuery,
+  type RecommendRow,
 } from "@/server/catalog";
 
 //* 영화와 TV 프로그램의 정보를 가져오는 서버 측 함수들을 정의하는 파일

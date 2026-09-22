@@ -1,20 +1,16 @@
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import type { ProgramKindFilter, ProgramSortKey } from "@/app/types/types";
-import {
-  getAvailableGenres,
-  getCatalog,
-  getRecentReleases,
-  queryCatalog,
-} from "@/server/contents";
+import { buildRecommendRows, getCatalog } from "@/server/contents";
 import { browseHref, genreLabel } from "@/app/lib/programUrls";
 import ProgramRow from "./program-row";
 import RevealRow from "./reveal-row";
-import FilterBar, { SORT_LABELS } from "./filter-bar";
+import FilterBar from "./filter-bar";
 import ProgramsSkeleton from "../skeleton/programs-skeleton";
 import RecommendErrorFallback from "./recommend-error-fallback";
 
-const ROW_LIMIT = 20;
+//* 행당 카드 수. 20 → 16으로 줄여 페이지 길이와 중복 노출을 낮춘다 (나머지는 "더 보기")
+const ROW_LIMIT = 16;
 const GENRE_ROW_COUNT = 10;
 const RECENT_DAYS = 45;
 //* 첫 화면에 보이는 행 수. 이 개수는 등장 애니메이션 없이 바로 표시하고 나머지는 스크롤로 들어올 때 등장
@@ -38,72 +34,26 @@ export default function RecommendSection(props: RecommendSectionProps) {
   );
 }
 
-async function RecommendRows({
-  ott,
-  providerId,
-  kind = "all",
-  sort = "popular",
-}: RecommendSectionProps) {
+async function RecommendRows({ ott, providerId, kind = "all", sort = "popular" }: RecommendSectionProps) {
   const catalog = await getCatalog();
   const base = { ott, kind, sort };
-  const sortSuffix = sort === "popular" ? "" : ` · ${SORT_LABELS[sort]}`;
 
-  const recent = getRecentReleases(catalog, {
+  const rows = buildRecommendRows(catalog, {
     providerId,
-    days: RECENT_DAYS,
-    limit: ROW_LIMIT,
-  }).filter((p) => kind === "all" || p.mediaType === kind);
+    kind,
+    sort,
+    rowLimit: ROW_LIMIT,
+    genreRowCount: GENRE_ROW_COUNT,
+    recentDays: RECENT_DAYS,
+    genreLabel,
+  });
 
-  const movies =
-    kind !== "tvshow"
-      ? queryCatalog(catalog, { providerId, kind: "movie", sort, limit: ROW_LIMIT }).items
-      : [];
-  const tvShows =
-    kind !== "movie"
-      ? queryCatalog(catalog, { providerId, kind: "tvshow", sort, limit: ROW_LIMIT }).items
-      : [];
-
-  const genreRows = getAvailableGenres(catalog, providerId)
-    .map((genre) => ({
-      genre,
-      items: queryCatalog(catalog, {
-        providerId,
-        kind,
-        genreId: genre.id,
-        sort,
-        limit: ROW_LIMIT,
-      }).items,
-    }))
-    .filter(({ items }) => items.length >= 4)
-    .slice(0, GENRE_ROW_COUNT);
-
-  // 표시할 행을 순서대로 모은다
-  const rows = [
-    {
-      key: "recent",
-      title: "최근 공개된 신작",
-      programs: recent,
-      moreHref: browseHref({ ...base, sort: "latest" }),
-    },
-    {
-      key: "movies",
-      title: `추천하는 영화${sortSuffix}`,
-      programs: movies,
-      moreHref: browseHref({ ...base, kind: "movie" }),
-    },
-    {
-      key: "tvshows",
-      title: `추천하는 TV 프로그램${sortSuffix}`,
-      programs: tvShows,
-      moreHref: browseHref({ ...base, kind: "tvshow" }),
-    },
-    ...genreRows.map(({ genre, items }) => ({
-      key: `genre-${genre.id}`,
-      title: `${genreLabel(genre.id, genre.name)} 장르${sortSuffix}`,
-      programs: items,
-      moreHref: browseHref({ ...base, genre: genre.id }),
-    })),
-  ].filter((row) => row.programs.length > 0);
+  const moreHrefFor = (row: (typeof rows)[number]) => {
+    if (row.key === "recent") return browseHref({ ...base, sort: "latest" });
+    if (row.key === "movies") return browseHref({ ...base, kind: "movie" });
+    if (row.key === "tvshows") return browseHref({ ...base, kind: "tvshow" });
+    return browseHref({ ...base, genre: row.genreId });
+  };
 
   return (
     <>
@@ -127,7 +77,7 @@ async function RecommendRows({
           <ProgramRow
             title={row.title}
             programs={row.programs}
-            moreHref={row.moreHref}
+            moreHref={moreHrefFor(row)}
             priorityCount={index === 0 ? 4 : 0}
           />
         </RevealRow>

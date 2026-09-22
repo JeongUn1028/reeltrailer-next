@@ -153,3 +153,44 @@ describe("selectTrailerPrograms", () => {
     expect(selectTrailerPrograms(trailerCatalog, { sort: "latest", limit: 2 }).map((p) => p.id)).toEqual([6, 5]);
   });
 });
+
+describe("buildRecommendRows", () => {
+  const now = new Date("2026-09-22T00:00:00Z");
+  const mk = (id: number, mediaType: "movie" | "tvshow", popularity: number, genres = [action], releaseDate: string | null = "2020-01-01", posterPath: string | null = "/p.jpg") =>
+    program({ id, mediaType, popularity, genres, releaseDate, posterPath, providers: [netflix] });
+  const bigCatalog: Catalog = {
+    movies: [
+      mk(1, "movie", 100, [action, drama], "2026-09-10"),
+      mk(2, "movie", 90, [action], "2026-09-15", null), // 포스터 없음 → 신작 제외
+      mk(3, "movie", 80, [drama]),
+      mk(4, "movie", 70, [action]),
+      mk(5, "movie", 60, [drama]),
+    ],
+    tvShows: [mk(6, "tvshow", 95, [drama], "2026-09-01"), mk(7, "tvshow", 50, [action])],
+  };
+
+  it("신작 행은 최근 N일 안에서 인기순이며 포스터 없는 항목은 제외한다", async () => {
+    const { buildRecommendRows } = await import("../catalog");
+    const rows = buildRecommendRows(bigCatalog, { now, recentDays: 30, rowLimit: 10, genreRowCount: 5 });
+    const recent = rows.find((r) => r.key === "recent")!;
+    expect(recent.programs.map((p) => p.id)).toEqual([1, 6]);
+  });
+
+  it("장르 행은 앞 행에 이미 나온 작품을 제외하고, 행당 개수 제한을 지킨다", async () => {
+    const { buildRecommendRows } = await import("../catalog");
+    const rows = buildRecommendRows(bigCatalog, { now, recentDays: 30, rowLimit: 2, genreRowCount: 5, minGenreRowSize: 1 });
+    const shownBefore = new Set(rows.filter((r) => !r.key.startsWith("genre-")).flatMap((r) => r.programs.map((p) => `${p.mediaType}-${p.id}`)));
+    for (const row of rows.filter((r) => r.key.startsWith("genre-"))) {
+      expect(row.programs.length).toBeLessThanOrEqual(2);
+      for (const p of row.programs) expect(shownBefore.has(`${p.mediaType}-${p.id}`)).toBe(false);
+    }
+  });
+
+  it("kind 필터와 정렬을 반영하고, 행 제목에는 정렬 접미사를 붙이지 않는다", async () => {
+    const { buildRecommendRows } = await import("../catalog");
+    const rows = buildRecommendRows(bigCatalog, { now, kind: "movie", sort: "latest", rowLimit: 10, genreRowCount: 5, minGenreRowSize: 1 });
+    expect(rows.find((r) => r.key === "tvshows")).toBeUndefined();
+    expect(rows.every((r) => r.programs.every((p) => p.mediaType === "movie"))).toBe(true);
+    expect(rows.map((r) => r.title)).not.toContainEqual(expect.stringContaining("최신순"));
+  });
+});
