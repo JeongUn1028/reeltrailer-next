@@ -5,6 +5,12 @@
   width: 200px;
   height: 300px;
   flex-shrink: 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transform: translateY(0) scale(1);
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
 }
 
 .image {
@@ -12,6 +18,24 @@
   height: auto;
   border-radius: 0.5rem;
   object-fit: fill;
+  transition: transform var(--duration-slow) var(--ease-out);
+}
+
+/* Link(a)에 hover/focus가 걸리면 카드가 떠오르고 포스터가 살짝 확대 */
+a:hover > .card,
+a:focus-visible > .card {
+  transform: translateY(-0.35rem) scale(1.02);
+  box-shadow: 0 1rem 1.75rem rgba(0, 0, 0, 0.5);
+}
+
+a:hover > .card .image,
+a:focus-visible > .card .image {
+  transform: scale(1.05);
+}
+
+a:focus-visible > .card {
+  outline: 2px solid #e50914;
+  outline-offset: 3px;
 }
 
 .fallback {

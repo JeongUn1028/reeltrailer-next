@@ -17,7 +17,7 @@
 .cardSkeleton {
   background: linear-gradient(110deg, #1f1f1f 25%, #303030 40%, #1f1f1f 55%);
   background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  animation: shimmer 1.6s linear infinite;
 }
 
 .titleSkeleton {

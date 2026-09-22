@@ -90,15 +90,24 @@
   align-items: center;
   transform: scale(1);
   transition:
-    transform 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease;
+    transform var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out);
 }
 
 .cardButton:hover {
   transform: translateY(-1px) scale(1.01);
   border-color: rgba(229, 9, 20, 0.85);
   box-shadow: 0 10px 18px rgba(0, 0, 0, 0.42);
+}
+
+.cardButton:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.cardButton:hover .thumbnail {
+  transform: scale(1.06);
 }
 
 .cardButton:focus-visible {
@@ -119,6 +128,7 @@
   height: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
+  transition: transform var(--duration-slow) var(--ease-out);
 }
 
 .cardInfo {

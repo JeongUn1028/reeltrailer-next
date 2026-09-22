@@ -42,6 +42,32 @@
     radial-gradient(circle at 78% 15%, rgba(229, 9, 20, 0.24), transparent 38%);
 }
 
+/* 상세 콘텐츠가 열릴 때 포스터 → 제목 → 본문 순으로 부드럽게 등장 */
+@keyframes detailFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.posterFrame,
+.heading,
+.body {
+  animation: detailFadeUp var(--duration-slow) var(--ease-out) both;
+}
+
+.heading {
+  animation-delay: 60ms;
+}
+
+.body {
+  animation-delay: 120ms;
+}
+
 .posterFrame {
   position: relative;
   width: 100%;

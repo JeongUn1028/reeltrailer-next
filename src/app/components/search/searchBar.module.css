@@ -15,6 +15,10 @@
   background: rgba(255, 255, 255, 0.04);
   color: #f5f5f5;
   padding: 0 0.75rem;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
 }
 
 .input::placeholder {
@@ -23,7 +27,9 @@
 
 .input:focus {
   outline: none;
-  border-color: rgba(229, 9, 20, 0.5);
+  border-color: rgba(229, 9, 20, 0.6);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.18);
 }
 
 .button {
@@ -34,9 +40,21 @@
   color: #ffffff;
   padding: 0 0.9rem;
   cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 }
 
-.button:hover {
+.button:hover,
+.button:focus-visible {
+  border-color: rgba(229, 9, 20, 0.85);
   background: rgba(229, 9, 20, 0.35);
   color: #ffd6db;
+  outline: none;
+}
+
+.button:active {
+  transform: scale(0.97);
 }

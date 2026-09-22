@@ -5,6 +5,13 @@
   --background-soft: #111111;
   --surface: #171717;
   --text: #f5f5f5;
+
+  /* 모션 토큰: 모든 transition/animation은 이 값을 사용해 일관된 느낌을 유지 */
+  --duration-fast: 160ms;
+  --duration-base: 240ms;
+  --duration-slow: 360ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 html,
@@ -52,6 +59,44 @@ dialog {
 dialog::backdrop {
   background: rgba(3, 3, 3, 0.78);
   backdrop-filter: blur(0.25rem);
+}
+
+/* 모달 열림 애니메이션: showModal()로 [open]이 붙는 순간 @starting-style 값에서 시작 */
+dialog[open] {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    transform var(--duration-slow) var(--ease-out);
+}
+
+dialog[open]::backdrop {
+  opacity: 1;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+@starting-style {
+  dialog[open] {
+    opacity: 0;
+    transform: translateX(-50%) translateY(1rem) scale(0.98);
+  }
+
+  dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+/* 사용자가 OS에서 동작 줄이기를 켠 경우 모든 모션 제거 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  dialog::backdrop {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @media (max-width: 700px) {

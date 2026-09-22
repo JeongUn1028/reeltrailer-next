@@ -20,8 +20,8 @@
   line-height: 1;
   cursor: pointer;
   transition:
-    color 0.2s ease,
-    opacity 0.2s ease;
+    color var(--duration-fast) var(--ease-out),
+    opacity var(--duration-fast) var(--ease-out);
 }
 
 .label {
@@ -40,7 +40,7 @@
   background: rgba(229, 9, 20, 0.95);
   transform: translateX(-50%) scaleX(0);
   transform-origin: center;
-  transition: transform 0.2s ease;
+  transition: transform var(--duration-base) var(--ease-out);
 }
 
 .item:hover {
