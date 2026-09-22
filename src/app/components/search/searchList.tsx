@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { searchPrograms } from "@/server/contents";
+import { SEARCH_PAGE_SIZE } from "@/app/lib/pageSizes";
 import { ottSlugToProviderId } from "@/app/lib/programUrls";
 import { isProgramKindFilter, type ProgramKindFilter } from "@/app/types/types";
-import Program from "@/app/components/programs/program";
+import InfiniteProgramGrid from "@/app/components/programs/infinite-program-grid";
 import styles from "./searchList.module.css";
 
 const TYPE_LABELS: Record<ProgramKindFilter, string> = {
@@ -40,14 +41,12 @@ export default async function SearchResults({
   }
 
   const providerId = ottSlugToProviderId(ott);
-  const programs = await searchPrograms(query, providerId);
-  const counts = {
-    all: programs.length,
-    movie: programs.filter((p) => p.mediaType === "movie").length,
-    tvshow: programs.filter((p) => p.mediaType === "tvshow").length,
-  };
-  const visible =
-    activeType === "all" ? programs : programs.filter((p) => p.mediaType === activeType);
+  const firstPage = await searchPrograms(query, {
+    providerId,
+    kind: activeType,
+    page: 1,
+    limit: SEARCH_PAGE_SIZE,
+  });
 
   const basePath = ott ? `/${ott}/search` : "/search";
   const typeHref = (next: ProgramKindFilter) => {
@@ -55,6 +54,12 @@ export default async function SearchResults({
     if (next !== "all") sp.set("type", next);
     return `${basePath}?${sp.toString()}`;
   };
+
+  // 무한 스크롤 API 엔드포인트 (page는 클라이언트가 붙인다)
+  const apiParams = new URLSearchParams({ q: query, limit: String(SEARCH_PAGE_SIZE) });
+  if (activeType !== "all") apiParams.set("kind", activeType);
+  if (providerId) apiParams.set("providerId", String(providerId));
+  const endpoint = `/api/search?${apiParams.toString()}`;
 
   return (
     <main className={styles.page}>
@@ -66,7 +71,10 @@ export default async function SearchResults({
               <>&ldquo;{query}&rdquo; 검색 결과</>
             </h1>
           </div>
-          <span className={styles.count}>{visible.length}편</span>
+          <span className={styles.count}>
+            {firstPage.items.length}
+            {firstPage.hasMore ? "+" : ""}편
+          </span>
         </div>
 
         <div className={styles.tabs} role="tablist" aria-label="결과 유형">
@@ -80,20 +88,18 @@ export default async function SearchResults({
               scroll={false}
             >
               {TYPE_LABELS[key]}
-              <span className={styles.tabCount}>{counts[key]}</span>
             </Link>
           ))}
         </div>
 
-        {visible.length > 0 ? (
-          <div className={styles.list}>
-            {visible.map((program) => (
-              <Program key={`${program.mediaType}-${program.id}`} program={program} />
-            ))}
-          </div>
-        ) : (
-          <div className={styles.empty}>검색 결과가 없습니다.</div>
-        )}
+        <div className={styles.results}>
+          <InfiniteProgramGrid
+            key={endpoint}
+            endpoint={endpoint}
+            initialPage={firstPage}
+            emptyText="검색 결과가 없습니다."
+          />
+        </div>
       </section>
     </main>
   );

@@ -1,0 +1,32 @@
+.row {
+  /* 화면 밖 행은 레이아웃/페인트를 건너뛰고, 자리 높이만 확보 */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 26rem;
+}
+
+/* 뷰포트에 들어오는 동안(진입 0% → 35%) 떠오르며 등장. 지원 브라우저에서만 적용 */
+@supports (animation-timeline: view()) {
+  .animated {
+    animation: rowReveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
+  }
+}
+
+@keyframes rowReveal {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 스크롤 기반 애니메이션은 duration이 무의미하므로 reduced-motion에서는 직접 끈다 */
+@media (prefers-reduced-motion: reduce) {
+  .animated {
+    animation: none;
+  }
+}

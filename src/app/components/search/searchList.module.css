@@ -80,27 +80,8 @@
   border-bottom-color: #e50914;
 }
 
-.tabCount {
-  padding: 0.1rem 0.45rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #c8c8c8;
-  font-size: 0.7rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
-  gap: 2rem 1.25rem;
-  justify-items: center;
-  padding: 1.5rem 0 0.5rem;
-}
-
-.list > a {
-  min-width: 0;
-  width: 100%;
-  max-width: 12.5rem;
+.results {
+  padding-top: 1.25rem;
 }
 
 .empty {
@@ -130,13 +111,4 @@
     font-size: 1.25rem;
   }
 
-  .list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.5rem 0.75rem;
-    padding-top: 1.25rem;
-  }
-
-  .list > a {
-    max-width: 10rem;
-  }
 }

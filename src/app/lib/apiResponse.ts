@@ -17,6 +17,8 @@ export function jsonError(message: string, status: number) {
 }
 
 //* 양의 정수 쿼리 파라미터 파싱. 없으면 fallback, 잘못된 값이면 null
+export function parsePositiveInt(value: string | null, fallback: number): number | null;
+export function parsePositiveInt(value: string | null): number | null | undefined;
 export function parsePositiveInt(
   value: string | null,
   fallback?: number,

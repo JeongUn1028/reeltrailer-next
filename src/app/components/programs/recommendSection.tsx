@@ -9,6 +9,7 @@ import {
 } from "@/server/contents";
 import { browseHref, genreLabel } from "@/app/lib/programUrls";
 import ProgramRow from "./program-row";
+import RevealRow from "./reveal-row";
 import FilterBar, { SORT_LABELS } from "./filter-bar";
 import ProgramsSkeleton from "../skeleton/programs-skeleton";
 import RecommendErrorFallback from "./recommend-error-fallback";
@@ -16,6 +17,8 @@ import RecommendErrorFallback from "./recommend-error-fallback";
 const ROW_LIMIT = 20;
 const GENRE_ROW_COUNT = 10;
 const RECENT_DAYS = 45;
+//* 첫 화면에 보이는 행 수. 이 개수는 등장 애니메이션 없이 바로 표시하고 나머지는 스크롤로 들어올 때 등장
+const EAGER_ROW_COUNT = 2;
 
 type RecommendSectionProps = {
   ott?: string;
@@ -74,6 +77,34 @@ async function RecommendRows({
     .filter(({ items }) => items.length >= 4)
     .slice(0, GENRE_ROW_COUNT);
 
+  // 표시할 행을 순서대로 모은다
+  const rows = [
+    {
+      key: "recent",
+      title: "최근 공개된 신작",
+      programs: recent,
+      moreHref: browseHref({ ...base, sort: "latest" }),
+    },
+    {
+      key: "movies",
+      title: `추천하는 영화${sortSuffix}`,
+      programs: movies,
+      moreHref: browseHref({ ...base, kind: "movie" }),
+    },
+    {
+      key: "tvshows",
+      title: `추천하는 TV 프로그램${sortSuffix}`,
+      programs: tvShows,
+      moreHref: browseHref({ ...base, kind: "tvshow" }),
+    },
+    ...genreRows.map(({ genre, items }) => ({
+      key: `genre-${genre.id}`,
+      title: `${genreLabel(genre.id, genre.name)} 장르${sortSuffix}`,
+      programs: items,
+      moreHref: browseHref({ ...base, genre: genre.id }),
+    })),
+  ].filter((row) => row.programs.length > 0);
+
   return (
     <>
       <FilterBar
@@ -91,29 +122,15 @@ async function RecommendRows({
         }}
       />
 
-      <ProgramRow
-        title="최근 공개된 신작"
-        programs={recent}
-        moreHref={browseHref({ ...base, sort: "latest" })}
-        priorityCount={4}
-      />
-      <ProgramRow
-        title={`추천하는 영화${sortSuffix}`}
-        programs={movies}
-        moreHref={browseHref({ ...base, kind: "movie" })}
-      />
-      <ProgramRow
-        title={`추천하는 TV 프로그램${sortSuffix}`}
-        programs={tvShows}
-        moreHref={browseHref({ ...base, kind: "tvshow" })}
-      />
-      {genreRows.map(({ genre, items }) => (
-        <ProgramRow
-          key={genre.id}
-          title={`${genreLabel(genre.id, genre.name)} 장르${sortSuffix}`}
-          programs={items}
-          moreHref={browseHref({ ...base, genre: genre.id })}
-        />
+      {rows.map((row, index) => (
+        <RevealRow key={row.key} eager={index < EAGER_ROW_COUNT}>
+          <ProgramRow
+            title={row.title}
+            programs={row.programs}
+            moreHref={row.moreHref}
+            priorityCount={index === 0 ? 4 : 0}
+          />
+        </RevealRow>
       ))}
     </>
   );

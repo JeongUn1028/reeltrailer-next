@@ -6,9 +6,9 @@ TMDB 데이터를 바탕으로 영화와 TV 프로그램을 탐색하고, 국내
 
 - 인기 영화 예고편 쇼케이스(플레이어 + 재생 목록)와 YouTube 임베드 재생
 - Netflix, Disney+, Tving, Watcha, Wavve별 콘텐츠 필터링
-- 최근 공개 신작, 영화, TV 프로그램, 장르별 추천 목록 (전체/영화/TV 토글, 인기순/최신순/평점순 정렬)
-- 조건별 전체 목록 페이지(`/browse`)와 페이지네이션
-- 제목·원제 기반 영화·TV 통합 검색, 자동완성, 최근 검색어(브라우저 로컬 저장), 결과 유형 탭
+- 최근 공개 신작, 영화, TV 프로그램, 장르별 추천 목록 (전체/영화/TV 토글, 인기순/최신순/평점순 정렬). 화면 아래 행은 스크롤에 따라 등장(CSS 스크롤 기반 애니메이션 + `content-visibility`)
+- 조건별 전체 목록 페이지(`/browse`)와 무한 스크롤 (JS 없는 환경은 페이지 링크)
+- 제목·원제 기반 영화·TV 통합 검색, 자동완성, 최근 검색어(브라우저 로컬 저장), 결과 유형 탭, 무한 스크롤
 - backdrop 히어로, 예고편 재생, OTT 바로가기 링크, 비슷한 콘텐츠를 포함한 상세 화면
 - 일반 상세 페이지와 인터셉팅 라우트 모달의 동일한 상세 UI 재사용
 - Suspense 기반 검색창·예고편 쇼케이스·추천 목록 스켈레톤과 오류 폴백
@@ -181,12 +181,13 @@ npm start
 | `GET`  | `/api/getMoviesList`      | `page`, `limit`, `providerId`, `sort` 선택 | 영화 목록 반환 (`total` 포함)      |
 | `GET`  | `/api/getTvShows`         | `page`, `limit`, `providerId`, `sort` 선택 | TV 프로그램 목록 반환              |
 | `GET`  | `/api/getProgramsByGenre` | `genre`(이름 또는 ID) 필수; `limit`, `providerId`, `sort` 선택 | 장르별 영화와 TV 목록 반환 |
-| `GET`  | `/api/search`             | `q`, `providerId` 선택                   | 제목·원제를 대소문자 구분 없이 검색 |
+| `GET`  | `/api/browse`             | `ott`, `kind`, `genre`, `sort`, `page`, `limit` 선택 | 목록 페이지용 `{ items, total, page, limit, hasMore }` |
+| `GET`  | `/api/search`             | `q`, `providerId`, `kind`, `page`, `limit` 선택 | 제목·원제 검색 `{ items, page, hasMore }` |
 | `GET`  | `/api/search/suggest`     | `q`(2글자 이상), `providerId` 선택       | 자동완성용 경량 결과 (최대 8개)    |
 | `GET`  | `/api/getProgramById`     | `id`, `kind` 필수                        | 영화 또는 TV 프로그램 상세 반환    |
 | `GET`  | `/api/cron/sync-tmdb`     | 없음                                     | TMDB 동기화 실행, Bearer 인증 필요 |
 
-`kind`는 `movie` 또는 `tvshow`만, `sort`는 `popular`(기본) · `latest` · `rating`만 허용합니다. 카탈로그 기반 API 응답에는 `Cache-Control: s-maxage=3600, stale-while-revalidate=86400`이 붙습니다. 검색은 유형별 최대 20개를 인기순으로 조회하며, 빈 검색어는 빈 배열을 반환합니다. 장르 API는 아래처럼 콘텐츠 유형별 배열을 반환합니다.
+`kind`는 `movie` 또는 `tvshow`만, `sort`는 `popular`(기본) · `latest` · `rating`만 허용합니다. 카탈로그 기반 API 응답에는 `Cache-Control: s-maxage=3600, stale-while-revalidate=86400`이 붙습니다. 검색은 유형별로 `limit`개씩(기본 20) 페이지 단위로 조회해 인기순으로 합치므로 `kind=all`이면 한 페이지에 최대 `2×limit`개가 옵니다. 빈 검색어는 빈 목록을 반환합니다. 장르 API는 아래처럼 콘텐츠 유형별 배열을 반환합니다.
 
 ```json
 {
@@ -252,7 +253,7 @@ prisma/
 
 - OTT 제공 정보는 TMDB가 한국 지역에서 구독형(`flatrate`)으로 제공하는 항목만 대상으로 합니다. 대여·구매 제공자는 포함하지 않습니다.
 - 콘텐츠와 예고편의 제공 여부는 TMDB와 YouTube의 지역·메타데이터 상태에 영향을 받습니다.
-- 검색 결과는 현재 페이지네이션을 제공하지 않으며, 각 유형별 최대 20개를 반환합니다.
+- 검색 결과는 유형별 20개 단위로 무한 스크롤됩니다. `전체` 탭은 영화·TV를 각각 페이지 단위로 가져와 합치므로 두 유형이 완전히 인기순으로 섞이지는 않습니다.
 - 지원 OTT는 Netflix, Disney+, Tving, Watcha, Wavve입니다.
 
 ## 데이터 출처

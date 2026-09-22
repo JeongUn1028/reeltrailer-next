@@ -138,3 +138,18 @@ export function getRecentReleases(
     .slice(0, limit);
 }
 
+
+//* 유형별로 limit+1개씩 조회한 두 페이지를 인기순으로 합친다 (검색 무한 스크롤용).
+//* 어느 한쪽이라도 limit개를 초과해 받았으면 다음 페이지가 있다고 본다.
+export function mergeTypedPages(
+  movies: ProgramSummary[],
+  tvShows: ProgramSummary[],
+  limit: number,
+): { items: ProgramSummary[]; hasMore: boolean } {
+  const hasMore = movies.length > limit || tvShows.length > limit;
+  const items = sortPrograms(
+    [...movies.slice(0, limit), ...tvShows.slice(0, limit)],
+    "popular",
+  );
+  return { items, hasMore };
+}
