@@ -29,16 +29,12 @@ const fetchProgramById = async (
     console.error("Invalid programId or kind");
     notFound();
   }
-  try {
-    const program = await getProgramById(Number(programId), kind);
-    if (!program) {
-      notFound();
-    }
-    return program;
-  } catch (error) {
-    console.error("Error fetching program:", error);
+  // DB 오류는 여기서 잡지 않고 error.tsx로 전파. 조회 결과가 없을 때만 404
+  const program = await getProgramById(Number(programId), kind);
+  if (!program) {
     notFound();
   }
+  return program;
 };
 
 const formatProgramData = (programData: ProgramType) => {

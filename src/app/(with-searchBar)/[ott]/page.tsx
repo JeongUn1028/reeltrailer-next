@@ -3,7 +3,7 @@ import CarouselContainer from "../../components/carousel";
 import RecommendSection from "../../components/programs/recommendSection";
 import { Suspense, use } from "react";
 import CarouselSkeleton from "../../components/skeleton/carousel-skeleton";
-import CarouselErrorFallback from "../../components/carousel/caarouselerrorfallback";
+import CarouselErrorFallback from "../../components/carousel/carousel-error-fallback";
 import providerIds from "@/config/ott-provider-ids.json";
 import { notFound } from "next/navigation";
 import { ErrorBoundary } from "react-error-boundary";

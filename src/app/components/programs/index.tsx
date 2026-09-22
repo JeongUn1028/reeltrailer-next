@@ -24,8 +24,9 @@ const getPrograms = async (
     });
     return [...programs.movies, ...programs.tvShows];
   } catch (error) {
+    // 조용히 빈 화면을 보여주는 대신 상위 ErrorBoundary가 폴백을 표시하도록 전파
     console.error("[Programs Component] Error fetching programs:", error);
-    return null;
+    throw error;
   }
 };
 

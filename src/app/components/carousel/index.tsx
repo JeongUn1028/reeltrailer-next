@@ -23,7 +23,9 @@ function buildUrl(ott: string | undefined) {
     }
   }
 
-  return `${process.env.NEXT_PUBLIC_API_URL}/getMoviesList?${params.toString()}`;
+  // 환경 변수가 없으면 같은 origin의 /api를 사용 (로컬 개발 시 "undefined/..." URL 방지)
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
+  return `${baseUrl}/getMoviesList?${params.toString()}`;
 }
 
 //* 영화 정보를 가져오는 함수

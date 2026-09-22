@@ -3,7 +3,7 @@ import styles from "./page.module.css";
 import { ErrorBoundary } from "react-error-boundary";
 import RecommendSection from "../components/programs/recommendSection";
 import { Suspense } from "react";
-import CarouselErrorFallback from "../components/carousel/caarouselerrorfallback";
+import CarouselErrorFallback from "../components/carousel/carousel-error-fallback";
 import CarouselSkeleton from "../components/skeleton/carousel-skeleton";
 
 export default function Home() {

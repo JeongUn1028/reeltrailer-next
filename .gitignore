@@ -36,6 +36,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# AI agent files (Next.js dev가 자동 생성하는 AGENTS.md/CLAUDE.md 및 Claude Code 로컬 설정)
+AGENTS.md
+CLAUDE.md
+.claude/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
