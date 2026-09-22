@@ -153,3 +153,20 @@ export function mergeTypedPages(
   );
   return { items, hasMore };
 }
+
+//* 예고편 쇼케이스용 목록: 예고편이 있는 항목만, 같은 예고편 키는 하나만, 조건/정렬을 반영해 limit개
+export function selectTrailerPrograms(
+  catalog: Catalog,
+  { providerId, kind = "all", sort = "popular", limit = 20 }: Omit<ProgramQuery, "genreId" | "page">,
+): ProgramSummary[] {
+  const { items } = queryCatalog(catalog, { providerId, kind, sort, limit: Number.MAX_SAFE_INTEGER });
+  const seen = new Set<string>();
+  const result: ProgramSummary[] = [];
+  for (const program of items) {
+    if (!program.trailerKey || seen.has(program.trailerKey)) continue;
+    seen.add(program.trailerKey);
+    result.push(program);
+    if (result.length >= limit) break;
+  }
+  return result;
+}

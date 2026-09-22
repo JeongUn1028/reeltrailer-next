@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { notFound } from "next/navigation";
-import TrailerShowcase from "../../components/trailers/trailer-showcase";
+import TrailerShowcaseSection from "../../components/trailers/trailer-showcase-section";
 import RecommendSection from "../../components/programs/recommendSection";
 import TrailerShowcaseErrorFallback from "../../components/trailers/trailer-showcase-error-fallback";
 import TrailerShowcaseSkeleton from "../../components/skeleton/trailer-showcase-skeleton";
@@ -28,7 +28,7 @@ export default async function OttHome({
     <div className={styles.container}>
       <ErrorBoundary FallbackComponent={TrailerShowcaseErrorFallback}>
         <Suspense fallback={<TrailerShowcaseSkeleton />}>
-          <TrailerShowcase />
+          <TrailerShowcaseSection providerId={providerId} kind={kind} sort={sort} />
         </Suspense>
       </ErrorBoundary>
       <RecommendSection ott={ott} providerId={providerId} kind={kind} sort={sort} />

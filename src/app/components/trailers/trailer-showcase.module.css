@@ -43,3 +43,77 @@
     min-height: 22rem;
   }
 }
+
+/* 재생 중 작품 캡션 */
+.playerPane {
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.caption {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 0.8rem;
+}
+
+.captionText {
+  min-width: 0;
+}
+
+.captionKicker {
+  margin: 0;
+  color: #e50914;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.captionTitle {
+  margin: 0.25rem 0 0.2rem;
+  overflow: hidden;
+  color: #f8f8f8;
+  font-size: 1.15rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.captionMeta {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  color: #a8a8a8;
+  font-size: 0.8rem;
+}
+
+.captionMeta > span + span::before {
+  margin: 0 0.45rem;
+  content: "·";
+}
+
+.captionLink {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid rgba(229, 9, 20, 0.65);
+  border-radius: 0.4rem;
+  background: rgba(229, 9, 20, 0.12);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.captionLink:hover,
+.captionLink:focus-visible {
+  border-color: #e50914;
+  background: rgba(229, 9, 20, 0.3);
+  outline: none;
+}

@@ -135,16 +135,40 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
+  padding: 0.5rem 0.65rem;
+}
+
+.cardTitle {
+  display: block;
+  overflow: hidden;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.92);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cardMeta {
-  display: block;
-  padding: 0.5rem 0.65rem;
-  font-size: 0.82rem;
+  display: flex;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.72rem;
+}
+
+.cardProviders {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.74rem;
   font-weight: 600;
-  letter-spacing: 0.01em;
-  color: rgba(255, 255, 255, 0.9);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.railTrack:focus-visible {
+  outline: 2px solid rgba(229, 9, 20, 0.9);
+  outline-offset: 2px;
 }
 
 @media (max-width: 760px) {

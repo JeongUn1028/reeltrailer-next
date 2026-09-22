@@ -131,3 +131,25 @@ describe("getRecentReleases", () => {
     expect(getRecentReleases(future, { days: 365, now })).toEqual([]);
   });
 });
+
+describe("selectTrailerPrograms", () => {
+  const withTrailer = (id: number, mediaType: "movie" | "tvshow", key: string | null, popularity: number, providers = [netflix]) =>
+    program({ id, mediaType, trailerKey: key, popularity, providers, releaseDate: `20${String(id).padStart(2, "0")}-01-01` });
+  const trailerCatalog: Catalog = {
+    movies: [withTrailer(1, "movie", "k1", 90), withTrailer(2, "movie", null, 80), withTrailer(3, "movie", "k1", 70), withTrailer(4, "movie", "k4", 60, [tving])],
+    tvShows: [withTrailer(5, "tvshow", "k5", 95), withTrailer(6, "tvshow", "k6", 10)],
+  };
+
+  it("예고편이 있는 항목만, 예고편 키 기준 중복 제거, 인기순", async () => {
+    const { selectTrailerPrograms } = await import("../catalog");
+    const items = selectTrailerPrograms(trailerCatalog, {});
+    expect(items.map((p) => `${p.mediaType}-${p.id}`)).toEqual(["tvshow-5", "movie-1", "movie-4", "tvshow-6"]);
+  });
+
+  it("kind / providerId / sort / limit을 반영한다", async () => {
+    const { selectTrailerPrograms } = await import("../catalog");
+    expect(selectTrailerPrograms(trailerCatalog, { kind: "movie" }).map((p) => p.id)).toEqual([1, 4]);
+    expect(selectTrailerPrograms(trailerCatalog, { providerId: 1883 }).map((p) => p.id)).toEqual([4]);
+    expect(selectTrailerPrograms(trailerCatalog, { sort: "latest", limit: 2 }).map((p) => p.id)).toEqual([6, 5]);
+  });
+});

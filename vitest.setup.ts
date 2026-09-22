@@ -7,6 +7,11 @@ afterEach(() => {
   cleanup();
 });
 
+// jsdom에는 scrollIntoView가 없다
+if (typeof Element !== "undefined" && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => {};
+}
+
 // next/image는 테스트 환경에서 최적화 로더가 없으므로 일반 <img>로 대체
 vi.mock("next/image", () => ({
   default: (

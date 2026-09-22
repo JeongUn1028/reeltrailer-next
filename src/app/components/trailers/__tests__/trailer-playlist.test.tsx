@@ -11,7 +11,7 @@ const program = (id: number, trailerKey: string, providers: string[]): ProgramSu
   posterPath: null,
   backdropPath: null,
   trailerKey,
-  releaseDate: null,
+  releaseDate: "2021-05-05",
   voteAverage: 0,
   voteCount: 0,
   popularity: 0,
@@ -23,36 +23,35 @@ describe("TrailerPlaylist", () => {
   const programs = [
     program(1, "aaa", ["Netflix", "Netflix Standard with Ads"]),
     program(2, "bbb", ["TVING"]),
-    program(3, "aaa", []), // 같은 예고편 키를 공유해도 별도 항목
+    program(3, "ccc", []),
   ];
 
-  it("영상 개수, 썸네일, 제목, 정규화된 OTT를 렌더링한다", () => {
-    render(<TrailerPlaylist programs={programs} selectedVideoId="bbb" onSelectVideo={vi.fn()} />);
-
-    expect(screen.getByText("3 videos")).toBeInTheDocument();
-    expect(screen.getAllByRole("button")).toHaveLength(3);
-    expect(screen.getByRole("img", { name: "Trailer 작품 1" })).toHaveAttribute(
+  it("한글 제목/개수, 16:9 썸네일(mqdefault), 정규화된 OTT, 연도를 렌더링한다", () => {
+    render(<TrailerPlaylist programs={programs} selectedIndex={1} onSelect={vi.fn()} />);
+    expect(screen.getByRole("heading", { name: "예고편 목록" })).toBeInTheDocument();
+    expect(screen.getByText("3편")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "작품 1 예고편 썸네일" })).toHaveAttribute(
       "src",
-      "https://i.ytimg.com/vi/aaa/hqdefault.jpg",
+      "https://i.ytimg.com/vi/aaa/mqdefault.jpg",
     );
-    // Netflix / Netflix Standard with Ads → "Netflix" 하나로 병합
     expect(screen.getByText("Netflix")).toBeInTheDocument();
     expect(screen.queryByText(/Standard with Ads/)).not.toBeInTheDocument();
+    expect(screen.getAllByText("2021")).toHaveLength(3);
   });
 
-  it("선택된 영상만 aria-pressed=true", () => {
-    render(<TrailerPlaylist programs={programs} selectedVideoId="bbb" onSelectVideo={vi.fn()} />);
-    const buttons = screen.getAllByRole("button");
-    expect(buttons[0]).toHaveAttribute("aria-pressed", "false");
-    expect(buttons[1]).toHaveAttribute("aria-pressed", "true");
+  it("listbox/option 역할과 aria-selected로 선택 상태를 표시한다", () => {
+    render(<TrailerPlaylist programs={programs} selectedIndex={1} onSelect={vi.fn()} />);
+    expect(screen.getByRole("listbox", { name: "예고편 목록" })).toBeInTheDocument();
+    const options = screen.getAllByRole("option");
+    expect(options[0]).toHaveAttribute("aria-selected", "false");
+    expect(options[1]).toHaveAttribute("aria-selected", "true");
   });
 
-  it("클릭하면 해당 예고편 키로 onSelectVideo를 호출한다", async () => {
+  it("클릭하면 인덱스로 onSelect를 호출한다", async () => {
     const user = userEvent.setup();
-    const onSelectVideo = vi.fn();
-    render(<TrailerPlaylist programs={programs} selectedVideoId="" onSelectVideo={onSelectVideo} />);
-
-    await user.click(screen.getByRole("button", { name: /작품 2/ }));
-    expect(onSelectVideo).toHaveBeenCalledWith("bbb");
+    const onSelect = vi.fn();
+    render(<TrailerPlaylist programs={programs} selectedIndex={0} onSelect={onSelect} />);
+    await user.click(screen.getByRole("option", { name: /작품 2/ }));
+    expect(onSelect).toHaveBeenCalledWith(1);
   });
 });

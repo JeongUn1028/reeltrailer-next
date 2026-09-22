@@ -4,7 +4,7 @@ TMDB 데이터를 바탕으로 영화와 TV 프로그램을 탐색하고, 국내
 
 ## 주요 기능
 
-- 인기 영화 예고편 쇼케이스(플레이어 + 재생 목록)와 YouTube 임베드 재생
+- 예고편 쇼케이스: 홈 필터(OTT/유형/정렬)를 반영한 영화·TV 예고편 목록, 클릭 시에만 YouTube 로드, 목록 전환·연속 재생, 키보드 탐색, 재생 중 작품 캡션
 - Netflix, Disney+, Tving, Watcha, Wavve별 콘텐츠 필터링
 - 최근 공개 신작, 영화, TV 프로그램, 장르별 추천 목록 (전체/영화/TV 토글, 인기순/최신순/평점순 정렬). 화면 아래 행은 스크롤에 따라 등장(CSS 스크롤 기반 애니메이션 + `content-visibility`)
 - 조건별 전체 목록 페이지(`/browse`)와 무한 스크롤 (JS 없는 환경은 페이지 링크)
@@ -65,8 +65,7 @@ flowchart TD
 - 홈 추천 행은 `src/server/contents.ts`의 `getCatalog()`가 영화/TV **인기 상위 1,000건씩**을 쿼리 2개로 조회해 Next Data Cache(`unstable_cache`, 태그 `contents`)에 저장하고, `src/server/catalog.ts`의 순수 함수가 메모리에서 행을 구성합니다. 전체 콘텐츠(수만 건)를 캐시에 넣으면 항목당 2MB 제한을 넘기 때문에 상위만 담습니다.
 - `/browse`, 검색, 사이트맵 등 전체 목록은 `src/server/program-query.ts`의 where/orderBy 빌더로 DB에서 페이지 단위로 직접 조회합니다(pg_trgm·popularity·날짜 인덱스). `kind=all`은 영화/TV를 유형별 페이지로 가져와 합칩니다.
 - Cron 동기화가 끝나면 `revalidateTag("contents")`로 캐시를 무효화하고, 그 사이에는 1시간마다 재검증합니다.
-- 예고편 쇼케이스와 검색 자동완성은 클라이언트 컴포넌트이며 `/api/getMoviesList`, `/api/search/suggest`를 TanStack Query로 요청합니다.
-- 쇼케이스는 OTT slug를 쿼리 키에 포함하고, 기본적으로 5분 동안 데이터를 fresh 상태로 유지하며 10분 뒤 가비지 컬렉션합니다.
+- 예고편 쇼케이스는 서버 컴포넌트가 카탈로그에서 예고편 목록을 골라 props로 넘기고, 클라이언트는 사용자가 재생을 누를 때만 YouTube IFrame API를 불러옵니다(영상 종료 시 다음 예고편 자동 재생). 검색 자동완성은 `/api/search/suggest`를 TanStack Query로 요청합니다.
 - `Movie`와 `TvShow`는 별도 모델이지만 화면에서는 `mediaType: "movie" | "tvshow"`으로 통합합니다. 같은 TMDB ID가 서로 다른 유형에 존재할 수 있으므로 상세 URL에는 `kind`가 필요합니다.
 
 ### 데이터 모델
@@ -122,7 +121,7 @@ SYNC_WEBHOOK_URL=""
 | `DIRECT_URL`           | Prisma migration에 사용하는 직접 PostgreSQL 연결 문자열           |
 | `TMDB_API_KEY`         | TMDB 콘텐츠, 예고편, 제공자 정보 동기화                           |
 | `CRON_SECRET_KEY`      | 동기화 endpoint의 Bearer 인증 토큰                                |
-| `NEXT_PUBLIC_API_URL`  | 브라우저에서 예고편 목록 API를 요청할 기준 URL. `/api`를 포함해야 함. 없으면 같은 origin의 `/api` 사용 |
+| `NEXT_PUBLIC_API_URL`  | (선택) 외부에서 API를 호출할 때의 기준 URL. 앱 내부에서는 더 이상 사용하지 않음 |
 | `SYNC_WEBHOOK_URL`     | (선택) Cron 동기화 결과 알림용 웹훅 URL                           |
 | `NEXT_PUBLIC_SITE_URL` | metadata, canonical URL, sitemap, robots 생성에 사용할 서비스 URL |
 

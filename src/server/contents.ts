@@ -23,6 +23,7 @@ export {
   getRecentReleases,
   mergeTypedPages,
   queryCatalog,
+  selectTrailerPrograms,
   sortPrograms,
   type Catalog,
   type ProgramQuery,
