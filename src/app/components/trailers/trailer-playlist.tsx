@@ -1,22 +1,23 @@
 import Image from "next/image";
-import styles from "./carousel-list.module.css";
+import styles from "./trailer-playlist.module.css";
 import { Dispatch, SetStateAction } from "react";
 import type { ProgramSummary } from "@/app/types/types";
 import { normalizeProviderName } from "@/app/lib/normalizeProviderName";
 
-type CarouselListProps = {
+type TrailerPlaylistProps = {
   programs: ProgramSummary[];
   selectedVideoId: string;
   onSelectVideo: Dispatch<SetStateAction<string>>;
 };
 
-export default function CarouselList({
+//* 예고편 재생 목록. 항목을 고르면 TrailerStage의 영상이 바뀐다.
+export default function TrailerPlaylist({
   programs,
   selectedVideoId,
   onSelectVideo,
-}: CarouselListProps) {
+}: TrailerPlaylistProps) {
   return (
-    <section className={styles.railSection} aria-label="Trailer carousel list">
+    <section className={styles.railSection} aria-label="Trailer playlist">
       <h3 className={styles.railTitle}>추천하는 영상 목록</h3>
       <p className={styles.railCount}>{programs.length} videos</p>
       <div className={styles.railTrack}>

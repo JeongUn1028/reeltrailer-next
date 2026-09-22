@@ -4,9 +4,9 @@ import { useState, useMemo } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import type { ProgramSummary } from "@/app/types/types";
-import Carousel from "./carousel";
-import CarouselList from "./carousel-list";
-import styles from "./index.module.css";
+import TrailerStage from "./trailer-stage";
+import TrailerPlaylist from "./trailer-playlist";
+import styles from "./trailer-showcase.module.css";
 import constants from "../../../config/ott-provider-ids.json";
 
 //* url 생성 함수
@@ -41,8 +41,8 @@ const fetchMovies = async (ott: string | undefined): Promise<ProgramSummary[]> =
   return movies || [];
 };
 
-//* CarouselContainer 컴포넌트
-export default function CarouselContainer() {
+//* 예고편 쇼케이스: 인기 영화 예고편 플레이어(왼쪽) + 재생 목록(오른쪽)
+export default function TrailerShowcase() {
   const params = useParams();
   const ott = typeof params?.ott === "string" ? params.ott : undefined;
 
@@ -67,12 +67,12 @@ export default function CarouselContainer() {
       : programs[0]?.trailerKey || "";
 
   return (
-    <div className={styles.carouselLayout}>
+    <div className={styles.showcaseLayout}>
       <div className={styles.playerPane}>
-        <Carousel videoId={currentVideoId} />
+        <TrailerStage videoId={currentVideoId} />
       </div>
       <div className={styles.listPane}>
-        <CarouselList
+        <TrailerPlaylist
           programs={programs}
           selectedVideoId={currentVideoId}
           onSelectVideo={setSelectedVideoId}

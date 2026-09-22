@@ -1,4 +1,4 @@
-.carouselLayout {
+.showcaseLayout {
   display: flex;
   align-items: stretch;
   width: 100%;
@@ -117,7 +117,7 @@
 }
 
 @media (max-width: 760px) {
-  .carouselLayout {
+  .showcaseLayout {
     flex-direction: column;
     min-height: unset;
     margin-top: 0.9rem;

@@ -4,14 +4,14 @@ TMDB 데이터를 바탕으로 영화와 TV 프로그램을 탐색하고, 국내
 
 ## 주요 기능
 
-- 인기 영화 예고편 캐러셀과 YouTube 임베드 재생
+- 인기 영화 예고편 쇼케이스(플레이어 + 재생 목록)와 YouTube 임베드 재생
 - Netflix, Disney+, Tving, Watcha, Wavve별 콘텐츠 필터링
 - 최근 공개 신작, 영화, TV 프로그램, 장르별 추천 목록 (전체/영화/TV 토글, 인기순/최신순/평점순 정렬)
 - 조건별 전체 목록 페이지(`/browse`)와 페이지네이션
 - 제목·원제 기반 영화·TV 통합 검색, 자동완성, 최근 검색어(브라우저 로컬 저장), 결과 유형 탭
 - backdrop 히어로, 예고편 재생, OTT 바로가기 링크, 비슷한 콘텐츠를 포함한 상세 화면
 - 일반 상세 페이지와 인터셉팅 라우트 모달의 동일한 상세 UI 재사용
-- Suspense 기반 검색창·캐러셀·추천 목록 스켈레톤과 캐러셀 오류 상태
+- Suspense 기반 검색창·예고편 쇼케이스·추천 목록 스켈레톤과 오류 폴백
 - 유효하지 않은 OTT 경로와 존재하지 않거나 잘못된 상세 요청의 404 처리, 데이터 오류 시 에러 폴백 화면
 - Vercel Cron을 통한 TMDB 콘텐츠, 예고편, 국내 OTT 제공 정보 동기화 (제공 종료 콘텐츠 정리, 캐시 무효화, 웹훅 알림)
 - Open Graph 메타데이터, `robots.txt`, `sitemap.xml`, Vercel Speed Insights 적용
@@ -20,7 +20,7 @@ TMDB 데이터를 바탕으로 영화와 TV 프로그램을 탐색하고, 국내
 
 | 경로                               | 설명                                     |
 | ---------------------------------- | ---------------------------------------- |
-| `/`                                | 전체 콘텐츠 홈, 예고편 캐러셀, 추천 목록 |
+| `/`                                | 전체 콘텐츠 홈, 예고편 쇼케이스, 추천 목록 |
 | `/netflix`                         | Netflix 필터 페이지                      |
 | `/disney-plus`                     | Disney+ 필터 페이지                      |
 | `/tving`                           | Tving 필터 페이지                        |
@@ -65,8 +65,8 @@ flowchart TD
 - 콘텐츠는 하루 한 번 Cron에서만 바뀌므로, `src/server/contents.ts`의 `getCatalog()`가 영화/TV 전체를 쿼리 2개로 조회해 Next Data Cache(`unstable_cache`, 태그 `contents`)에 저장합니다. 필터·정렬·페이지네이션은 `src/server/catalog.ts`의 순수 함수가 메모리에서 처리합니다.
 - Cron 동기화가 끝나면 `revalidateTag("contents")`로 캐시를 무효화하고, 그 사이에는 1시간마다 재검증합니다.
 - 추천 목록, 목록 페이지, 상세 화면, 사이트맵은 서버 컴포넌트에서 카탈로그를 사용합니다. 검색은 DB를 직접 조회합니다(pg_trgm 인덱스).
-- 예고편 캐러셀과 검색 자동완성은 클라이언트 컴포넌트이며 `/api/getMoviesList`, `/api/search/suggest`를 TanStack Query로 요청합니다.
-- 캐러셀은 OTT slug를 쿼리 키에 포함하고, 기본적으로 5분 동안 데이터를 fresh 상태로 유지하며 10분 뒤 가비지 컬렉션합니다.
+- 예고편 쇼케이스와 검색 자동완성은 클라이언트 컴포넌트이며 `/api/getMoviesList`, `/api/search/suggest`를 TanStack Query로 요청합니다.
+- 쇼케이스는 OTT slug를 쿼리 키에 포함하고, 기본적으로 5분 동안 데이터를 fresh 상태로 유지하며 10분 뒤 가비지 컬렉션합니다.
 - `Movie`와 `TvShow`는 별도 모델이지만 화면에서는 `mediaType: "movie" | "tvshow"`으로 통합합니다. 같은 TMDB ID가 서로 다른 유형에 존재할 수 있으므로 상세 URL에는 `kind`가 필요합니다.
 
 ### 데이터 모델
@@ -122,7 +122,7 @@ SYNC_WEBHOOK_URL=""
 | `DIRECT_URL`           | Prisma migration에 사용하는 직접 PostgreSQL 연결 문자열           |
 | `TMDB_API_KEY`         | TMDB 콘텐츠, 예고편, 제공자 정보 동기화                           |
 | `CRON_SECRET_KEY`      | 동기화 endpoint의 Bearer 인증 토큰                                |
-| `NEXT_PUBLIC_API_URL`  | 브라우저에서 캐러셀 API를 요청할 기준 URL. `/api`를 포함해야 함. 없으면 같은 origin의 `/api` 사용 |
+| `NEXT_PUBLIC_API_URL`  | 브라우저에서 예고편 목록 API를 요청할 기준 URL. `/api`를 포함해야 함. 없으면 같은 origin의 `/api` 사용 |
 | `SYNC_WEBHOOK_URL`     | (선택) Cron 동기화 결과 알림용 웹훅 URL                           |
 | `NEXT_PUBLIC_SITE_URL` | metadata, canonical URL, sitemap, robots 생성에 사용할 서비스 URL |
 
@@ -228,7 +228,7 @@ src/
 │   ├── (with-searchBar)/       # 홈, OTT 필터, 목록(browse), 검색 페이지
 │   ├── @modal/                 # 인터셉팅 라우트 상세 모달
 │   ├── api/                    # Route Handlers
-│   ├── components/             # 헤더, 캐러셀, 검색, 콘텐츠, 에러 UI
+│   ├── components/             # 헤더, 예고편 쇼케이스, 검색, 콘텐츠, 에러 UI
 │   ├── lib/                    # URL/이미지 헬퍼, 파라미터 파싱, 최근 검색어
 │   ├── program/[programId]/    # 직접 접근하는 상세 페이지
 │   ├── error.tsx, global-error.tsx  # 에러 바운더리

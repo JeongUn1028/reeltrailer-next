@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { notFound } from "next/navigation";
-import CarouselContainer from "../../components/carousel";
+import TrailerShowcase from "../../components/trailers/trailer-showcase";
 import RecommendSection from "../../components/programs/recommendSection";
-import CarouselErrorFallback from "../../components/carousel/carousel-error-fallback";
-import CarouselSkeleton from "../../components/skeleton/carousel-skeleton";
+import TrailerShowcaseErrorFallback from "../../components/trailers/trailer-showcase-error-fallback";
+import TrailerShowcaseSkeleton from "../../components/skeleton/trailer-showcase-skeleton";
 import { ottSlugToProviderId } from "@/app/lib/programUrls";
 import { parseListSearchParams, type ListSearchParams } from "@/app/lib/listParams";
 import styles from "../page.module.css";
@@ -26,9 +26,9 @@ export default async function OttHome({
 
   return (
     <div className={styles.container}>
-      <ErrorBoundary FallbackComponent={CarouselErrorFallback}>
-        <Suspense fallback={<CarouselSkeleton />}>
-          <CarouselContainer />
+      <ErrorBoundary FallbackComponent={TrailerShowcaseErrorFallback}>
+        <Suspense fallback={<TrailerShowcaseSkeleton />}>
+          <TrailerShowcase />
         </Suspense>
       </ErrorBoundary>
       <RecommendSection ott={ott} providerId={providerId} kind={kind} sort={sort} />

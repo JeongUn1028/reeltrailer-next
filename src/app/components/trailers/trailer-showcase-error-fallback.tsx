@@ -4,12 +4,12 @@ import type { FallbackProps } from "react-error-boundary";
 import { useQueryErrorResetBoundary } from "@tanstack/react-query";
 import ErrorState from "../error/error-state";
 
-export default function CarouselErrorFallback({
+export default function TrailerShowcaseErrorFallback({
   error,
   resetErrorBoundary,
 }: FallbackProps) {
   const { reset } = useQueryErrorResetBoundary();
-  console.error("[Carousel]", error);
+  console.error("[TrailerShowcase]", error);
 
   return (
     <ErrorState

@@ -1,9 +1,9 @@
-import styles from "./index.module.css";
+import styles from "./trailer-showcase-skeleton.module.css";
 
-export default function CarouselSkeleton() {
+export default function TrailerShowcaseSkeleton() {
   return (
     <div
-      className={styles.carouselLayout}
+      className={styles.showcaseLayout}
       aria-busy="true"
       aria-label="Loading trailers"
     >

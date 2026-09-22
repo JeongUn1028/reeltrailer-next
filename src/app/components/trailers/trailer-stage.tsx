@@ -1,7 +1,8 @@
-import styles from "./carousel.module.css";
+import styles from "./trailer-stage.module.css";
 import YouTubeEmbed from "./youtubeEmbed";
 
-export default function Carousel({ videoId }: { videoId: string }) {
+//* 선택된 예고편을 재생하는 플레이어 영역
+export default function TrailerStage({ videoId }: { videoId: string }) {
   return (
     <section className={styles.heroSection} aria-label="Featured trailer">
       <div className={styles.heroGlow} />
