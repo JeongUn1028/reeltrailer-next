@@ -1,18 +1,20 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import styles from "./tabs.module.css";
 
+const OTTS = ["All", "Netflix", "Tving", "Disney+", "Watcha", "Wavve"] as const;
+
+const getOttPath = (ott: string) =>
+  ott === "All" ? "/" : `/${ott.toLowerCase().replace("+", "-plus")}`;
+
+//* 상단 OTT 탭. <Link>라 prefetch·새 탭 열기·크롤링이 모두 동작한다.
 export default function Tabs() {
-  const otts = ["All", "Netflix", "Tving", "Disney+", "Watcha", "Wavve"];
-  const router = useRouter();
   const pathname = usePathname();
 
-  const getOttPath = (ott: string) =>
-    ott === "All" ? "/" : `/${ott.toLowerCase().replace("+", "-plus")}`;
-
   const activeOtt =
-    otts.find((ott) => {
+    OTTS.find((ott) => {
       const ottPath = getOttPath(ott);
       return (
         ottPath === pathname ||
@@ -20,22 +22,21 @@ export default function Tabs() {
       );
     }) ?? "All";
 
-  const onClickOtt = (ott: string) => {
-    router.push(getOttPath(ott));
-  };
-
   return (
-    <div className={styles.container}>
-      {otts.map((ott) => (
-        <button
-          key={ott}
-          className={`${styles.item} ${activeOtt === ott ? styles.active : ""}`}
-          onClick={() => onClickOtt(ott)}
-          aria-pressed={activeOtt === ott}
-        >
-          <span className={styles.label}>{ott}</span>
-        </button>
-      ))}
-    </div>
+    <nav className={styles.container} aria-label="OTT 선택">
+      {OTTS.map((ott) => {
+        const isActive = activeOtt === ott;
+        return (
+          <Link
+            key={ott}
+            href={getOttPath(ott)}
+            className={`${styles.item} ${isActive ? styles.active : ""}`}
+            aria-current={isActive ? "page" : undefined}
+          >
+            <span className={styles.label}>{ott}</span>
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

@@ -1,9 +1,13 @@
 .container {
+  position: relative;
   width: min(100%, 50rem);
+  padding: 0.75rem 0;
+}
+
+.inputRow {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 0;
 }
 
 .input {
@@ -23,6 +27,10 @@
 
 .input::placeholder {
   color: rgba(245, 245, 245, 0.55);
+}
+
+.input::-webkit-search-cancel-button {
+  cursor: pointer;
 }
 
 .input:focus {
@@ -57,4 +65,173 @@
 
 .button:active {
   transform: scale(0.97);
+}
+
+/* 드롭다운 (최근 검색어 / 자동완성) */
+.dropdown {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% - 0.25rem);
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.6rem;
+  background: #161616;
+  box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.55);
+  animation: dropdownIn var(--duration-base) var(--ease-out) both;
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section + .section {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.9rem 0.3rem;
+  color: #8a8a8a;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.list {
+  margin: 0;
+  padding: 0 0.4rem 0.4rem;
+  list-style: none;
+}
+
+.recentItem {
+  display: flex;
+  align-items: center;
+  border-radius: 0.4rem;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.recentItem:hover,
+.recentItem:focus-within {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.recentQuery {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0.55rem 0.5rem;
+  border: 0;
+  background: transparent;
+  color: #e8e8e8;
+  font-size: 0.88rem;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.removeButton {
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 0.3rem;
+  background: transparent;
+  color: #8a8a8a;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.removeButton:hover,
+.removeButton:focus-visible {
+  color: #fff;
+  outline: none;
+}
+
+.textButton {
+  border: 0;
+  background: transparent;
+  color: #a8a8a8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.textButton:hover,
+.textButton:focus-visible {
+  color: #fff;
+  outline: none;
+}
+
+.suggestion {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.4rem;
+  color: #e8e8e8;
+  text-decoration: none;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.suggestion:hover,
+.suggestion:focus-visible {
+  background: rgba(255, 255, 255, 0.06);
+  outline: none;
+}
+
+.suggestionPoster {
+  display: block;
+  width: 2rem;
+  height: 3rem;
+  border-radius: 0.2rem;
+  object-fit: cover;
+  background: #262626;
+}
+
+.suggestionTitle {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestionMeta {
+  color: #8a8a8a;
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+
+.seeAll {
+  display: block;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e50914;
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.seeAll:hover,
+.seeAll:focus-visible {
+  background: rgba(229, 9, 20, 0.08);
+  color: #ff3340;
 }

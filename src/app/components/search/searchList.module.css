@@ -46,23 +46,61 @@
   font-size: 0.8rem;
 }
 
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: -1px;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 2px solid transparent;
+  color: #a8a8a8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
+}
+
+.tab:hover,
+.tab:focus-visible {
+  color: #fff;
+  outline: none;
+}
+
+.tabActive {
+  color: #fff;
+  border-bottom-color: #e50914;
+}
+
+.tabCount {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #c8c8c8;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
-  gap: 3rem 1.25rem;
+  gap: 2rem 1.25rem;
   justify-items: center;
-  padding: 1.75rem 0 0.5rem;
+  padding: 1.5rem 0 0.5rem;
 }
 
 .list > a {
   min-width: 0;
   width: 100%;
   max-width: 12.5rem;
-}
-
-.list > a > div {
-  width: 100%;
-  height: auto;
 }
 
 .empty {

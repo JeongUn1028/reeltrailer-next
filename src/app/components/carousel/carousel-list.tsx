@@ -1,11 +1,11 @@
 import Image from "next/image";
 import styles from "./carousel-list.module.css";
 import { Dispatch, SetStateAction } from "react";
-import type { ProgramType } from "@/app/types/types";
+import type { ProgramSummary } from "@/app/types/types";
 import { normalizeProviderName } from "@/app/lib/normalizeProviderName";
 
 type CarouselListProps = {
-  programs: ProgramType[];
+  programs: ProgramSummary[];
   selectedVideoId: string;
   onSelectVideo: Dispatch<SetStateAction<string>>;
 };
@@ -25,7 +25,7 @@ export default function CarouselList({
 
           return (
             <button
-              key={program.trailerKey}
+              key={`${program.mediaType}-${program.id}`}
               type="button"
               className={`${styles.cardButton} ${isActive ? styles.cardActive : ""}`}
               onClick={() => {
@@ -48,7 +48,7 @@ export default function CarouselList({
                 <span className={styles.cardMeta}>
                   {Array.from(
                     new Set(
-                      program.providers?.map((provider) =>
+                      program.providers.map((provider) =>
                         normalizeProviderName(provider.providerName),
                       ),
                     ),

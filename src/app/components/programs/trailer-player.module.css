@@ -1,0 +1,78 @@
+.frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.6rem;
+  background: #0f0f0f;
+}
+
+.button {
+  display: block;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+
+.button:focus-visible {
+  outline: 2px solid #e50914;
+  outline-offset: 2px;
+}
+
+.thumbnail {
+  object-fit: cover;
+  filter: brightness(0.7);
+  transition:
+    transform var(--duration-slow) var(--ease-out),
+    filter var(--duration-base) var(--ease-out);
+}
+
+.button:hover .thumbnail,
+.button:focus-visible .thumbnail {
+  transform: scale(1.03);
+  filter: brightness(0.85);
+}
+
+.playBadge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.2rem 0.7rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  background: rgba(10, 10, 10, 0.72);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  backdrop-filter: blur(6px);
+  transform: translate(-50%, -50%);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+}
+
+.button:hover .playBadge,
+.button:focus-visible .playBadge {
+  background: rgba(229, 9, 20, 0.9);
+  transform: translate(-50%, -50%) scale(1.04);
+}
+
+.playIcon {
+  width: 0;
+  height: 0;
+  border-top: 0.45rem solid transparent;
+  border-bottom: 0.45rem solid transparent;
+  border-left: 0.75rem solid currentColor;
+}
+
+.iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

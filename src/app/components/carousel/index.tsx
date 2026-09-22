@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import type { ProgramType } from "@/app/types/types";
+import type { ProgramSummary } from "@/app/types/types";
 import Carousel from "./carousel";
 import CarouselList from "./carousel-list";
 import styles from "./index.module.css";
@@ -29,7 +29,7 @@ function buildUrl(ott: string | undefined) {
 }
 
 //* 영화 정보를 가져오는 함수
-const fetchMovies = async (ott: string | undefined): Promise<ProgramType[]> => {
+const fetchMovies = async (ott: string | undefined): Promise<ProgramSummary[]> => {
   const url = buildUrl(ott);
   const response = await fetch(url);
 
@@ -37,7 +37,7 @@ const fetchMovies = async (ott: string | undefined): Promise<ProgramType[]> => {
     throw new Error("영화 정보를 가져오지 못했습니다.");
   }
 
-  const { movies } = (await response.json()) as { movies: ProgramType[] };
+  const { movies } = (await response.json()) as { movies: ProgramSummary[] };
   return movies || [];
 };
 
@@ -55,7 +55,7 @@ export default function CarouselContainer() {
   });
 
   const programs = useMemo(
-    () => data.filter((movie) => movie?.trailerKey != null),
+    () => data.filter((movie) => movie.trailerKey != null),
     [data],
   );
 

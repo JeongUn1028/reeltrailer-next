@@ -1,20 +1,28 @@
-import styles from "../page.module.css";
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import { notFound } from "next/navigation";
 import CarouselContainer from "../../components/carousel";
 import RecommendSection from "../../components/programs/recommendSection";
-import { Suspense, use } from "react";
-import CarouselSkeleton from "../../components/skeleton/carousel-skeleton";
 import CarouselErrorFallback from "../../components/carousel/carousel-error-fallback";
-import providerIds from "@/config/ott-provider-ids.json";
-import { notFound } from "next/navigation";
-import { ErrorBoundary } from "react-error-boundary";
+import CarouselSkeleton from "../../components/skeleton/carousel-skeleton";
+import { ottSlugToProviderId } from "@/app/lib/programUrls";
+import { parseListSearchParams, type ListSearchParams } from "@/app/lib/listParams";
+import styles from "../page.module.css";
 
-export default function Home({ params }: { params: Promise<{ ott: string }> }) {
-  const { ott } = use(params);
-  const providerId = providerIds[ott as keyof typeof providerIds];
-
+export default async function OttHome({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ ott: string }>;
+  searchParams: Promise<ListSearchParams>;
+}) {
+  const { ott } = await params;
+  const providerId = ottSlugToProviderId(ott);
   if (!providerId) {
     notFound();
   }
+
+  const { kind, sort } = parseListSearchParams(await searchParams);
 
   return (
     <div className={styles.container}>
@@ -23,7 +31,7 @@ export default function Home({ params }: { params: Promise<{ ott: string }> }) {
           <CarouselContainer />
         </Suspense>
       </ErrorBoundary>
-      <RecommendSection providerId={providerId} />
+      <RecommendSection ott={ott} providerId={providerId} kind={kind} sort={sort} />
     </div>
   );
 }
