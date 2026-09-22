@@ -13,7 +13,7 @@ TMDB 데이터를 바탕으로 영화와 TV 프로그램을 탐색하고, 국내
 - 일반 상세 페이지와 인터셉팅 라우트 모달의 동일한 상세 UI 재사용
 - Suspense 기반 검색창·예고편 쇼케이스·추천 목록 스켈레톤과 오류 폴백
 - 유효하지 않은 OTT 경로와 존재하지 않거나 잘못된 상세 요청의 404 처리, 데이터 오류 시 에러 폴백 화면
-- Vercel Cron을 통한 TMDB 콘텐츠, 예고편, 국내 OTT 제공 정보 동기화 (제공 종료 콘텐츠 정리, 캐시 무효화, 웹훅 알림)
+- 전체 기간의 국내 OTT 구독형 콘텐츠를 1회 백필(로컬 스크립트)하고, Vercel Cron이 매일 인기·신작 갱신과 순환 재검증(제공 종료 콘텐츠 정리)을 수행. 캐시 무효화, 웹훅 알림
 - Open Graph 메타데이터, `robots.txt`, `sitemap.xml`, Vercel Speed Insights 적용
 
 ## 화면과 라우팅
@@ -62,9 +62,9 @@ flowchart TD
 
 ### 데이터 흐름
 
-- 콘텐츠는 하루 한 번 Cron에서만 바뀌므로, `src/server/contents.ts`의 `getCatalog()`가 영화/TV 전체를 쿼리 2개로 조회해 Next Data Cache(`unstable_cache`, 태그 `contents`)에 저장합니다. 필터·정렬·페이지네이션은 `src/server/catalog.ts`의 순수 함수가 메모리에서 처리합니다.
+- 홈 추천 행은 `src/server/contents.ts`의 `getCatalog()`가 영화/TV **인기 상위 1,000건씩**을 쿼리 2개로 조회해 Next Data Cache(`unstable_cache`, 태그 `contents`)에 저장하고, `src/server/catalog.ts`의 순수 함수가 메모리에서 행을 구성합니다. 전체 콘텐츠(수만 건)를 캐시에 넣으면 항목당 2MB 제한을 넘기 때문에 상위만 담습니다.
+- `/browse`, 검색, 사이트맵 등 전체 목록은 `src/server/program-query.ts`의 where/orderBy 빌더로 DB에서 페이지 단위로 직접 조회합니다(pg_trgm·popularity·날짜 인덱스). `kind=all`은 영화/TV를 유형별 페이지로 가져와 합칩니다.
 - Cron 동기화가 끝나면 `revalidateTag("contents")`로 캐시를 무효화하고, 그 사이에는 1시간마다 재검증합니다.
-- 추천 목록, 목록 페이지, 상세 화면, 사이트맵은 서버 컴포넌트에서 카탈로그를 사용합니다. 검색은 DB를 직접 조회합니다(pg_trgm 인덱스).
 - 예고편 쇼케이스와 검색 자동완성은 클라이언트 컴포넌트이며 `/api/getMoviesList`, `/api/search/suggest`를 TanStack Query로 요청합니다.
 - 쇼케이스는 OTT slug를 쿼리 키에 포함하고, 기본적으로 5분 동안 데이터를 fresh 상태로 유지하며 10분 뒤 가비지 컬렉션합니다.
 - `Movie`와 `TvShow`는 별도 모델이지만 화면에서는 `mediaType: "movie" | "tvshow"`으로 통합합니다. 같은 TMDB ID가 서로 다른 유형에 존재할 수 있으므로 상세 URL에는 `kind`가 필요합니다.
@@ -198,6 +198,19 @@ npm start
 
 ## TMDB 동기화
 
+### 최초 백필 (로컬 1회)
+
+전체 기간의 국내 OTT 구독형 콘텐츠(약 33,000건, 2026년 기준)는 Vercel 함수 시간 제한 안에 넣을 수 없으므로 로컬에서 스크립트로 넣습니다. 연도 단위로 discover를 순회하고(쿼리당 500페이지 제한 회피), 진행 상태를 `.backfill-state.json`에 저장해 중단 후 이어서 실행할 수 있습니다.
+
+```bash
+# 운영 DB에 직접 연결해 실행 (약 40~60분, rps 25 기준)
+DATABASE_URL="..." DIRECT_URL="..." TMDB_API_KEY="..." npm run backfill
+# 일부 연도만 / 속도 조절 / 처음부터 다시
+npm run backfill -- --from 2020 --to 2026 --rps 30 --reset
+```
+
+### 일일 증분 동기화 (Vercel Cron)
+
 `vercel.json`은 `/api/cron/sync-tmdb`를 매일 `18:00 UTC`에 실행합니다.
 
 ```json
@@ -211,9 +224,15 @@ npm start
 }
 ```
 
-동기화는 TMDB의 인기 영화와 TV 프로그램을 조회하고, 한국(`KR`)의 `flatrate` 제공자 정보와 예고편 키를 저장합니다. Netflix Standard with Ads(1796)는 Netflix(8)로 병합되며, 이번 동기화에서 갱신되지 않은(국내 OTT에서 빠진) 콘텐츠는 삭제됩니다. 실패율이 10%를 넘으면 삭제를 건너뜁니다. 완료 후 `contents` 캐시 태그를 무효화하고, `SYNC_WEBHOOK_URL`이 설정되어 있으면 결과 요약을 Discord/Slack 웹훅으로 전송합니다.
+Cron은 실행 시간 예산(300초) 안에서 세 단계를 수행합니다.
 
-라우트의 `maxDuration`은 300초입니다. Vercel Hobby 플랜(60초 상한)에서는 Fluid compute를 활성화하거나 `TARGET_ITEM_COUNT`를 줄여야 합니다. Cron 요청은 다음과 같이 `CRON_SECRET_KEY`와 일치하는 Authorization 헤더가 있어야 합니다.
+1. 현재 인기 상위 영화/TV 각 300건 갱신
+2. 최근 30일 신작 영화/TV 각 최대 300건 추가
+3. `updatedAt`이 가장 오래된 콘텐츠부터 최대 800건의 국내 제공자를 재조회해, 제공이 끝난 콘텐츠는 삭제하고 나머지는 관계를 갱신합니다 (남은 시간에 맞춰 개수가 줄어듭니다). 33,000건 기준 약 40일에 한 바퀴 돕니다.
+
+Netflix Standard with Ads(1796)는 Netflix(8)로 병합됩니다. 완료 후 `contents` 캐시 태그를 무효화하고, `SYNC_WEBHOOK_URL`이 설정되어 있으면 결과 요약을 Discord/Slack 웹훅으로 전송합니다.
+
+라우트의 `maxDuration`은 300초입니다. Vercel Hobby 플랜은 기본 60초가 상한이므로 프로젝트 설정에서 **Fluid compute를 활성화**해야 합니다(무료). Cron 요청은 다음과 같이 `CRON_SECRET_KEY`와 일치하는 Authorization 헤더가 있어야 합니다.
 
 ```http
 Authorization: Bearer <CRON_SECRET_KEY>
@@ -241,7 +260,11 @@ src/
     ├── prisma.ts               # Prisma singleton
     ├── contents.ts             # 캐시된 카탈로그, 상세, 검색 조회
     ├── catalog.ts              # 필터/정렬/페이지네이션 순수 함수
-    └── sync/                   # TMDB 동기화 헬퍼, 웹훅 알림
+    ├── program-query.ts        # 전체 목록 DB 조회용 where/orderBy 빌더
+    └── sync/                   # TMDB 클라이언트, 저장 로직, 백필 계획, 재검증, 웹훅 알림
+
+scripts/
+└── backfill-tmdb.ts            # 전체 기간 1회 백필 스크립트
 
 prisma/
 ├── schema.prisma               # PostgreSQL 데이터 모델

@@ -46,3 +46,6 @@ CLAUDE.md
 next-env.d.ts
 
 /src/generated/prisma
+
+# TMDB 백필 진행 상태 (로컬 전용)
+.backfill-state.json

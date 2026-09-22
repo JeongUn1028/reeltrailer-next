@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import providers from "@/config/ott-provider-ids.json";
-import { getCatalog } from "@/server/contents";
+import { getAllProgramRefs } from "@/server/contents";
 import { programHref } from "@/app/lib/programUrls";
 
 // 끝의 슬래시를 제거해 "https://host//path" 같은 URL이 생기지 않도록 함
@@ -25,10 +25,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 상세 페이지: DB 조회에 실패해도 정적 항목은 내보낸다
   let programEntries: MetadataRoute.Sitemap = [];
   try {
-    const catalog = await getCatalog();
-    programEntries = [...catalog.movies, ...catalog.tvShows].map((program) => ({
+    const programs = await getAllProgramRefs();
+    programEntries = programs.map((program) => ({
       url: `${siteUrl}${programHref(program.id, program.mediaType)}`,
-      lastModified: now,
+      lastModified: program.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.6,
     }));

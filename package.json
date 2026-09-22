@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:seed:dev": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-dev.ts"
+    "db:seed:dev": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-dev.ts",
+    "backfill": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/backfill-tmdb.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

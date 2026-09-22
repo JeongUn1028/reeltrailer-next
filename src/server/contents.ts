@@ -12,10 +12,11 @@ import type {
 } from "@/app/types/types";
 import {
   mergeTypedPages,
-  queryCatalog,
+  sortPrograms,
   type Catalog,
   type ProgramQuery,
 } from "@/server/catalog";
+import { buildOrderBy, buildWhere } from "@/server/program-query";
 
 export {
   getAvailableGenres,
@@ -29,13 +30,16 @@ export {
 
 //* 영화와 TV 프로그램의 정보를 가져오는 서버 측 함수들을 정의하는 파일
 //*
-//* 데이터는 하루 한 번 Cron에서만 바뀌므로, 카탈로그 전체를 한 번에 조회해
-//* Next Data Cache(unstable_cache)에 CONTENTS_TAG 태그로 캐싱하고
-//* 필터/정렬/페이지네이션은 메모리에서 처리한다. Cron 종료 시 revalidateTag로 무효화.
+//* - 홈 추천 행: 인기 상위 FEATURED_LIMIT건만 카탈로그로 조회해 Next Data Cache(unstable_cache,
+//*   CONTENTS_TAG)에 캐싱하고 메모리에서 행을 구성한다 (catalog.ts). 전체 콘텐츠(수만 건)를
+//*   캐시에 넣으면 항목당 2MB 제한을 넘기 때문에 상위만 담는다.
+//* - /browse, 검색, 사이트맵 등 전체 목록: DB에서 페이지 단위로 직접 조회한다 (program-query.ts).
+//* Cron 종료 시 revalidateTag로 캐시를 무효화한다.
 
 export const CONTENTS_TAG = "contents";
 const CATALOG_REVALIDATE_SECONDS = 60 * 60; // 1시간 (Cron이 태그 무효화를 못 했을 때의 안전장치)
-const CATALOG_MAX_ITEMS = 500; // 유형별 최대 조회 개수 (Cron 목표 300개보다 여유 있게)
+//* 홈 추천용 카탈로그에 담을 유형별 인기 상위 개수. 장르 행(최대 10개 × 20건)과 OTT 필터를 채우기에 충분한 크기
+const FEATURED_LIMIT = 1000;
 
 // -------------------------
 // Prisma select 정의
@@ -139,19 +143,19 @@ const toTvShowSummary = (row: TvShowSummaryRow): ProgramSummary => ({
 // -------------------------
 
 
-//* 전체 카탈로그 조회. 쿼리 2개로 끝나며 결과는 Data Cache에 저장된다.
+//* 홈 추천용 카탈로그(유형별 인기 상위 FEATURED_LIMIT건). 쿼리 2개로 끝나며 결과는 Data Cache에 저장된다.
 export const getCatalog = unstable_cache(
   async (): Promise<Catalog> => {
     const [movies, tvShows] = await Promise.all([
       prisma.movie.findMany({
         select: movieSummarySelect,
         orderBy: { popularity: "desc" },
-        take: CATALOG_MAX_ITEMS,
+        take: FEATURED_LIMIT,
       }),
       prisma.tvShow.findMany({
         select: tvShowSummarySelect,
         orderBy: { popularity: "desc" },
-        take: CATALOG_MAX_ITEMS,
+        take: FEATURED_LIMIT,
       }),
     ]);
 
@@ -165,13 +169,63 @@ export const getCatalog = unstable_cache(
 );
 
 // -------------------------
-// 편의 함수 (컴포넌트/API에서 사용)
+// 전체 목록 조회 (DB 페이지 단위)
 // -------------------------
 
-//* 조건에 맞는 프로그램 목록 (카탈로그 캐시 사용)
-export async function getPrograms(query: ProgramQuery) {
-  const catalog = await getCatalog();
-  return queryCatalog(catalog, query);
+export interface ProgramPageResult {
+  items: ProgramSummary[];
+  /** kind별 전체 개수의 합 */
+  total: number;
+  page: number;
+  hasMore: boolean;
+}
+
+//* 조건에 맞는 프로그램을 DB에서 페이지 단위로 조회한다.
+//* kind=all이면 영화/TV를 각각 limit개씩 가져와 정렬해 합치므로 한 페이지에 최대 2*limit개가 올 수 있다
+//* (두 테이블을 하나의 정렬로 합치는 대신 유형별 페이지를 유지해 페이지네이션이 단순하고 일관되게 동작한다).
+export async function getPrograms({
+  providerId,
+  kind = "all",
+  genreId,
+  sort = "popular",
+  limit = 20,
+  page = 1,
+}: ProgramQuery): Promise<ProgramPageResult> {
+  const where = buildWhere({ providerId, genreId, sort });
+  const skip = Math.max(0, (page - 1) * limit);
+  const wantMovies = kind !== "tvshow";
+  const wantTvShows = kind !== "movie";
+
+  const [movies, movieTotal, tvShows, tvTotal] = await Promise.all([
+    wantMovies
+      ? prisma.movie.findMany({
+          where,
+          select: movieSummarySelect,
+          orderBy: [...buildOrderBy(sort, "releaseDate")],
+          skip,
+          take: limit + 1,
+        })
+      : Promise.resolve([]),
+    wantMovies ? prisma.movie.count({ where }) : Promise.resolve(0),
+    wantTvShows
+      ? prisma.tvShow.findMany({
+          where,
+          select: tvShowSummarySelect,
+          orderBy: [...buildOrderBy(sort, "firstAirDate")],
+          skip,
+          take: limit + 1,
+        })
+      : Promise.resolve([]),
+    wantTvShows ? prisma.tvShow.count({ where }) : Promise.resolve(0),
+  ]);
+
+  const hasMore = movies.length > limit || tvShows.length > limit;
+  const items = sortPrograms(
+    [...movies.slice(0, limit).map(toMovieSummary), ...tvShows.slice(0, limit).map(toTvShowSummary)],
+    sort,
+  );
+
+  return { items, total: movieTotal + tvTotal, page, hasMore };
 }
 
 //* 특정 유형의 목록 (기존 API 호환용)
@@ -183,6 +237,20 @@ export async function getProgramList(
 ): Promise<ProgramSummary[]> {
   const { items } = await getPrograms({ providerId, kind, limit, page });
   return items;
+}
+
+//* 사이트맵용: 전체 콘텐츠의 id/유형/갱신일만 조회
+export async function getAllProgramRefs(): Promise<
+  { id: number; mediaType: ProgramMediaType; updatedAt: Date }[]
+> {
+  const [movies, tvShows] = await Promise.all([
+    prisma.movie.findMany({ select: { id: true, updatedAt: true }, orderBy: { popularity: "desc" } }),
+    prisma.tvShow.findMany({ select: { id: true, updatedAt: true }, orderBy: { popularity: "desc" } }),
+  ]);
+  return [
+    ...movies.map((m) => ({ ...m, mediaType: "movie" as const })),
+    ...tvShows.map((t) => ({ ...t, mediaType: "tvshow" as const })),
+  ];
 }
 
 // -------------------------
