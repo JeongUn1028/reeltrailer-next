@@ -4,18 +4,12 @@ import prisma from "@/server/prisma";
 import type {
   GenreDetails,
   ProgramDetail,
-  ProgramKindFilter,
   ProgramMediaType,
   ProgramSummary,
   Provider,
   SearchSuggestion,
 } from "@/app/types/types";
-import {
-  mergeTypedPages,
-  sortPrograms,
-  type Catalog,
-  type ProgramQuery,
-} from "@/server/catalog";
+import { sortPrograms, type Catalog, type ProgramQuery } from "@/server/catalog";
 import { buildOrderBy, buildWhere } from "@/server/program-query";
 
 export {
@@ -279,6 +273,7 @@ const fetchProgramDetail = unstable_cache(
       return {
         ...toMovieSummary(movie),
         originalTitle: movie.originalTitle,
+        englishTitle: movie.englishTitle,
         overview: movie.overview,
       };
     }
@@ -291,6 +286,7 @@ const fetchProgramDetail = unstable_cache(
     return {
       ...toTvShowSummary(tvShow),
       originalTitle: tvShow.originalTitle,
+      englishTitle: tvShow.englishTitle,
       overview: tvShow.overview,
     };
   },
@@ -335,67 +331,10 @@ export async function getSimilarPrograms(
 // 검색
 // -------------------------
 
-const buildTitleWhere = (query: string) => ({
-  OR: [
-    { title: { contains: query, mode: "insensitive" as const } },
-    { originalTitle: { contains: query, mode: "insensitive" as const } },
-  ],
-});
+import { searchPrograms } from "@/server/search/query";
 
-export interface SearchOptions {
-  providerId?: number;
-  kind?: ProgramKindFilter;
-  page?: number;
-  /** 유형별 페이지 크기 */
-  limit?: number;
-}
-
-export interface SearchPage {
-  items: ProgramSummary[];
-  page: number;
-  hasMore: boolean;
-}
-
-//* 제목/원제 검색. 영화·TV를 병렬 조회해 인기순으로 합치고 페이지 단위로 반환한다.
-//* kind=all이면 유형별로 limit개씩 가져오므로 한 페이지에 최대 2*limit개가 올 수 있다.
-export async function searchPrograms(
-  query: string,
-  { providerId, kind = "all", page = 1, limit = 20 }: SearchOptions = {},
-): Promise<SearchPage> {
-  const trimmed = query.trim();
-  if (!trimmed) return { items: [], page, hasMore: false };
-
-  const providerWhere = providerId
-    ? { providers: { some: { providerId } } }
-    : {};
-  const pagination = { skip: (page - 1) * limit, take: limit + 1 };
-
-  const [movies, tvShows] = await Promise.all([
-    kind === "tvshow"
-      ? Promise.resolve([])
-      : prisma.movie.findMany({
-          where: { ...buildTitleWhere(trimmed), ...providerWhere },
-          select: movieSummarySelect,
-          orderBy: { popularity: "desc" },
-          ...pagination,
-        }),
-    kind === "movie"
-      ? Promise.resolve([])
-      : prisma.tvShow.findMany({
-          where: { ...buildTitleWhere(trimmed), ...providerWhere },
-          select: tvShowSummarySelect,
-          orderBy: { popularity: "desc" },
-          ...pagination,
-        }),
-  ]);
-
-  const merged = mergeTypedPages(
-    movies.map(toMovieSummary),
-    tvShows.map(toTvShowSummary),
-    limit,
-  );
-  return { ...merged, page };
-}
+export { searchPrograms };
+export type { SearchHit, SearchOptions, SearchPage, SearchSort } from "@/server/search/query";
 
 //* 검색 자동완성용 경량 조회
 export async function searchSuggestions(
@@ -410,5 +349,6 @@ export async function searchSuggestions(
     title: p.title,
     posterPath: p.posterPath,
     releaseDate: p.releaseDate,
+    providers: p.providers,
   }));
 }

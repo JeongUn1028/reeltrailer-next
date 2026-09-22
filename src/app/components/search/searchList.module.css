@@ -18,6 +18,7 @@
 
 .header {
   display: flex;
+  flex-wrap: wrap;
   align-items: end;
   justify-content: space-between;
   gap: 1rem;
@@ -40,17 +41,50 @@
   line-height: 1.2;
 }
 
-.count {
-  flex-shrink: 0;
-  color: #a8a8a8;
-  font-size: 0.8rem;
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-top: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .tabs {
   display: flex;
   gap: 0.25rem;
-  margin-top: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sorts {
+  display: flex;
+  gap: 0.25rem;
+  padding-bottom: 0.35rem;
+}
+
+.sort {
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  color: #a8a8a8;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+
+.sort:hover,
+.sort:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+.sortActive,
+.sortActive:hover {
+  color: #fff;
+  background: rgba(229, 9, 20, 0.85);
 }
 
 .tab {

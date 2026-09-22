@@ -8,6 +8,7 @@ const program: ProgramDetail = {
   mediaType: "movie",
   title: "기생충",
   originalTitle: "Parasite",
+  englishTitle: "Parasite",
   overview: "줄거리 본문 텍스트",
   posterPath: "/p.jpg",
   backdropPath: "/b.jpg",

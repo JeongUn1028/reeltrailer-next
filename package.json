@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:seed:dev": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed-dev.ts",
-    "backfill": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/backfill-tmdb.ts"
+    "backfill": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/backfill-tmdb.ts",
+    "refresh:search": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/refresh-search-fields.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

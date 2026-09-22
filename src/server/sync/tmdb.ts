@@ -135,6 +135,17 @@ export class TmdbClient {
     return trailer?.key ?? videos[0]?.key ?? null;
   }
 
+  //* 영문(en-US) 제목. 한국 작품은 원제가 한글이라 영문 검색을 위해 별도로 저장한다
+  async fetchEnglishTitle(kind: TmdbKind, id: number): Promise<string | null> {
+    try {
+      const data = await this.fetch<{ title?: string; name?: string }>(`/${kind}/${id}`, { language: "en-US" });
+      return (kind === "movie" ? data.title : data.name) || null;
+    } catch (error) {
+      console.error(`[sync] ${kind}/${id} 영문 제목 조회 실패:`, error);
+      return null;
+    }
+  }
+
   async fetchGenres(): Promise<Map<number, string>> {
     type GenreResponse = { genres: { id: number; name: string }[] };
     const [movieGenres, tvGenres] = await Promise.all([

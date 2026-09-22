@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { searchSuggestions } from "@/server/contents";
 import { jsonError, parsePositiveInt } from "@/app/lib/apiResponse";
 
-//* 검색창 자동완성용. 2글자 이상부터 응답
-const MIN_QUERY_LENGTH = 2;
+//* 검색창 자동완성용. 한글은 1글자도 의미가 있으므로 1글자부터 응답
+const MIN_QUERY_LENGTH = 1;
 
 export async function GET(request: Request) {
   try {

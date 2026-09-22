@@ -8,7 +8,7 @@ export default async function Page({
   searchParams,
   params,
 }: {
-  searchParams: Promise<{ q?: string; type?: string }>;
+  searchParams: Promise<{ q?: string; type?: string; sort?: string }>;
   params: Promise<{ ott: string }>;
 }) {
   const { ott } = await params;

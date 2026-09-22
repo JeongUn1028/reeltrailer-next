@@ -3,6 +3,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { TMDBProvider } from "./helpers";
 import { parseDate } from "./helpers";
 import type { TmdbClient, TmdbKind, TMDBMovie, TMDBTVShow } from "./tmdb";
+import { buildSearchText } from "@/server/search/normalize";
 
 export interface ProcessDeps {
   prisma: PrismaClient;
@@ -77,10 +78,15 @@ export async function processMovie(
   const providers = await tmdb.fetchKrFlatrateProviders("movie", movie.id);
   if (providers.length === 0) return "skipped";
 
-  const trailerKey = await tmdb.fetchTrailerKey("movie", movie.id);
+  const [trailerKey, englishTitle] = await Promise.all([
+    tmdb.fetchTrailerKey("movie", movie.id),
+    tmdb.fetchEnglishTitle("movie", movie.id),
+  ]);
   const data = {
     title: movie.title,
     originalTitle: movie.original_title,
+    englishTitle,
+    searchText: buildSearchText({ title: movie.title, originalTitle: movie.original_title, englishTitle }),
     overview: movie.overview,
     posterPath: movie.poster_path,
     backdropPath: movie.backdrop_path,
@@ -110,10 +116,15 @@ export async function processTvShow(
   const providers = await tmdb.fetchKrFlatrateProviders("tv", tvShow.id);
   if (providers.length === 0) return "skipped";
 
-  const trailerKey = await tmdb.fetchTrailerKey("tv", tvShow.id);
+  const [trailerKey, englishTitle] = await Promise.all([
+    tmdb.fetchTrailerKey("tv", tvShow.id),
+    tmdb.fetchEnglishTitle("tv", tvShow.id),
+  ]);
   const data = {
     title: tvShow.name,
     originalTitle: tvShow.original_name,
+    englishTitle,
+    searchText: buildSearchText({ title: tvShow.name, originalTitle: tvShow.original_name, englishTitle }),
     overview: tvShow.overview,
     posterPath: tvShow.poster_path,
     backdropPath: tvShow.backdrop_path,

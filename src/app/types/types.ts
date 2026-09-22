@@ -31,6 +31,7 @@ export interface ProgramSummary {
 //* 상세 화면용 정보
 export interface ProgramDetail extends ProgramSummary {
   originalTitle: string | null;
+  englishTitle: string | null;
   overview: string | null;
 }
 
@@ -41,6 +42,7 @@ export interface SearchSuggestion {
   title: string;
   posterPath: string | null;
   releaseDate: Date | string | null;
+  providers: Provider[];
 }
 
 export type ProgramSortKey = "popular" | "latest" | "rating";

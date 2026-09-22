@@ -79,9 +79,13 @@ export function ProgramDetailView({ program, similar }: ProgramDetailViewProps) 
       >
         <p className={styles.kicker}>{isMovie ? "MOVIE" : "TV SHOW"}</p>
         <h1 className={styles.title}>{program.title}</h1>
-        {program.originalTitle && program.originalTitle !== program.title && (
-          <p className={styles.originalTitle}>{program.originalTitle}</p>
-        )}
+        {(() => {
+          // 원제 → 영문 제목 순으로, 제목과 다른 것만 표시 (한국 작품은 원제가 한글이라 영문 제목이 유용)
+          const subtitles = [program.originalTitle, program.englishTitle].filter(
+            (t, i, arr): t is string => !!t && t !== program.title && arr.indexOf(t) === i,
+          );
+          return subtitles.length > 0 && <p className={styles.originalTitle}>{subtitles.join(" · ")}</p>;
+        })()}
         <p className={styles.meta}>
           {hasRating && (
             <span className={styles.rating}>

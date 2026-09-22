@@ -180,20 +180,53 @@
 
 .suggestion {
   display: grid;
-  grid-template-columns: 2rem 1fr auto;
+  width: 100%;
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.7rem;
   padding: 0.4rem 0.5rem;
+  border: 0;
   border-radius: 0.4rem;
+  background: transparent;
   color: #e8e8e8;
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease-out);
 }
 
 .suggestion:hover,
-.suggestion:focus-visible {
-  background: rgba(255, 255, 255, 0.06);
+.suggestion:focus-visible,
+.optionActive,
+.optionActive .recentQuery {
+  background: rgba(255, 255, 255, 0.08);
   outline: none;
+}
+
+.suggestionBody {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.suggestionBadges {
+  display: flex;
+  align-items: center;
+}
+
+.dropdown mark {
+  background: transparent;
+  color: #ff3340;
+  font-weight: 800;
+}
+
+.errorNote {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f2c94c;
+  font-size: 0.78rem;
 }
 
 .suggestionPoster {

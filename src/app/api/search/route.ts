@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
-import { searchPrograms } from "@/server/contents";
+import { searchPrograms, type SearchSort } from "@/server/contents";
 import { isProgramKindFilter } from "@/app/types/types";
 import { jsonError, parsePositiveInt } from "@/app/lib/apiResponse";
 import { SEARCH_PAGE_SIZE } from "@/app/lib/pageSizes";
 
-//* 검색 결과. 무한 스크롤을 위해 page/kind를 받고 { items, page, hasMore } 형태로 반환
+const SEARCH_SORTS: SearchSort[] = ["relevance", "popular", "latest"];
+const isSearchSort = (v: string): v is SearchSort => (SEARCH_SORTS as string[]).includes(v);
+
+//* 검색 결과. 무한 스크롤을 위해 page/kind/sort를 받고 { items, page, hasMore, total, fuzzy } 형태로 반환
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -13,6 +16,7 @@ export async function GET(request: Request) {
     const page = parsePositiveInt(searchParams.get("page"), 1);
     const limit = parsePositiveInt(searchParams.get("limit"), SEARCH_PAGE_SIZE);
     const kindParam = searchParams.get("kind") ?? "all";
+    const sortParam = searchParams.get("sort") ?? "relevance";
 
     if (providerId === null) {
       return jsonError("providerId는 양의 정수여야 합니다.", 400);
@@ -23,8 +27,11 @@ export async function GET(request: Request) {
     if (!isProgramKindFilter(kindParam)) {
       return jsonError("kind는 all | movie | tvshow 중 하나여야 합니다.", 400);
     }
+    if (!isSearchSort(sortParam)) {
+      return jsonError("sort는 relevance | popular | latest 중 하나여야 합니다.", 400);
+    }
 
-    const result = await searchPrograms(query, { providerId, kind: kindParam, page, limit });
+    const result = await searchPrograms(query, { providerId, kind: kindParam, page, limit, sort: sortParam });
     return NextResponse.json(result);
   } catch (error) {
     console.error("[API] 검색 에러:", error);

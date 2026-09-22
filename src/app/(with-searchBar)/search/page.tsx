@@ -5,7 +5,7 @@ import { Suspense } from "react";
 export default function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string }>;
+  searchParams: Promise<{ q?: string; type?: string; sort?: string }>;
 }) {
   return (
     <Suspense fallback={<ProgramsSkeleton />}>

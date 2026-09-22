@@ -8,7 +8,7 @@ TMDB 데이터를 바탕으로 영화와 TV 프로그램을 탐색하고, 국내
 - Netflix, Disney+, Tving, Watcha, Wavve별 콘텐츠 필터링
 - 최근 공개 신작(최근 45일 인기순), 영화, TV 프로그램, 장르별 추천 행 (전체/영화/TV 토글, 인기순/최신순/평점순 정렬). 장르 행은 앞 행에 나온 작품을 제외해 중복을 줄이고, 행마다 좌/우 화살표·scroll-snap, 카드에 OTT 배지 표시. 화면 아래 행은 스크롤에 따라 등장(CSS 스크롤 기반 애니메이션 + `content-visibility`)
 - 조건별 전체 목록 페이지(`/browse`)와 무한 스크롤 (JS 없는 환경은 페이지 링크)
-- 제목·원제 기반 영화·TV 통합 검색, 자동완성, 최근 검색어(브라우저 로컬 저장), 결과 유형 탭, 무한 스크롤
+- 제목·원제·영문 제목 통합 검색: 띄어쓰기/대소문자 무관, 오타 허용(trigram 유사도), 관련도·인기·최신 정렬, 자동완성(키보드 탐색·일치 강조·OTT 배지), 최근 검색어, 결과 유형 탭, 무한 스크롤
 - backdrop 히어로, 예고편 재생, OTT 바로가기 링크, 비슷한 콘텐츠를 포함한 상세 화면
 - 일반 상세 페이지와 인터셉팅 라우트 모달의 동일한 상세 UI 재사용
 - Suspense 기반 검색창·예고편 쇼케이스·추천 목록 스켈레톤과 오류 폴백
@@ -63,7 +63,8 @@ flowchart TD
 ### 데이터 흐름
 
 - 홈 추천 행은 `src/server/contents.ts`의 `getCatalog()`가 영화/TV **인기 상위 1,000건씩**을 쿼리 2개로 조회해 Next Data Cache(`unstable_cache`, 태그 `contents`)에 저장하고, `src/server/catalog.ts`의 순수 함수가 메모리에서 행을 구성합니다. 전체 콘텐츠(수만 건)를 캐시에 넣으면 항목당 2MB 제한을 넘기 때문에 상위만 담습니다.
-- `/browse`, 검색, 사이트맵 등 전체 목록은 `src/server/program-query.ts`의 where/orderBy 빌더로 DB에서 페이지 단위로 직접 조회합니다(pg_trgm·popularity·날짜 인덱스). `kind=all`은 영화/TV를 유형별 페이지로 가져와 합칩니다.
+- `/browse`, 사이트맵 등 전체 목록은 `src/server/program-query.ts`의 where/orderBy 빌더로 DB에서 페이지 단위로 직접 조회합니다. `kind=all`은 영화/TV를 유형별 페이지로 가져와 합칩니다.
+- 검색은 `src/server/search/`가 담당합니다. 제목·원제·영문 제목을 소문자·공백/구두점 제거로 정규화한 `searchText` 컬럼(pg_trgm GIN 인덱스)에 대해 부분 일치 또는 `word_similarity ≥ 0.4`(오타 허용)로 후보를 찾고, 정확 > 접두 > 부분 > 유사 순의 관련도와 인기순으로 정렬합니다. 일치 결과가 없고 유사 결과만 있으면 `fuzzy` 플래그로 안내합니다.
 - Cron 동기화가 끝나면 `revalidateTag("contents")`로 캐시를 무효화하고, 그 사이에는 1시간마다 재검증합니다.
 - 예고편 쇼케이스는 서버 컴포넌트가 카탈로그에서 예고편 목록을 골라 props로 넘기고, 클라이언트는 사용자가 재생을 누를 때만 YouTube IFrame API를 불러옵니다(영상 종료 시 다음 예고편 자동 재생). 검색 자동완성은 `/api/search/suggest`를 TanStack Query로 요청합니다.
 - `Movie`와 `TvShow`는 별도 모델이지만 화면에서는 `mediaType: "movie" | "tvshow"`으로 통합합니다. 같은 TMDB ID가 서로 다른 유형에 존재할 수 있으므로 상세 URL에는 `kind`가 필요합니다.
@@ -181,8 +182,8 @@ npm start
 | `GET`  | `/api/getTvShows`         | `page`, `limit`, `providerId`, `sort` 선택 | TV 프로그램 목록 반환              |
 | `GET`  | `/api/getProgramsByGenre` | `genre`(이름 또는 ID) 필수; `limit`, `providerId`, `sort` 선택 | 장르별 영화와 TV 목록 반환 |
 | `GET`  | `/api/browse`             | `ott`, `kind`, `genre`, `sort`, `page`, `limit` 선택 | 목록 페이지용 `{ items, total, page, limit, hasMore }` |
-| `GET`  | `/api/search`             | `q`, `providerId`, `kind`, `page`, `limit` 선택 | 제목·원제 검색 `{ items, page, hasMore }` |
-| `GET`  | `/api/search/suggest`     | `q`(2글자 이상), `providerId` 선택       | 자동완성용 경량 결과 (최대 8개)    |
+| `GET`  | `/api/search`             | `q`, `providerId`, `kind`, `sort`(relevance/popular/latest), `page`, `limit` 선택 | 검색 `{ items, page, hasMore, total, fuzzy }` (항목에 `rank`, `similarity` 포함) |
+| `GET`  | `/api/search/suggest`     | `q`(1글자 이상), `providerId` 선택       | 자동완성용 경량 결과 (최대 8개, OTT 포함) |
 | `GET`  | `/api/getProgramById`     | `id`, `kind` 필수                        | 영화 또는 TV 프로그램 상세 반환    |
 | `GET`  | `/api/cron/sync-tmdb`     | 없음                                     | TMDB 동기화 실행, Bearer 인증 필요 |
 
@@ -206,6 +207,12 @@ npm start
 DATABASE_URL="..." DIRECT_URL="..." TMDB_API_KEY="..." npm run backfill
 # 일부 연도만 / 속도 조절 / 처음부터 다시
 npm run backfill -- --from 2020 --to 2026 --rps 30 --reset
+```
+
+백필이 끝난 뒤(또는 이 기능을 추가하기 전에 넣은 데이터에 대해) 영문 제목과 검색 문자열을 채웁니다 (항목당 요청 1개, 33,000건 기준 15분 내외).
+
+```bash
+DATABASE_URL="..." DIRECT_URL="..." TMDB_API_KEY="..." npm run refresh:search
 ```
 
 ### 일일 증분 동기화 (Vercel Cron)
