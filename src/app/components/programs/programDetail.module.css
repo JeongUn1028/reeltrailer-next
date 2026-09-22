@@ -139,26 +139,26 @@
 .watch {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.55rem;
 }
 
+/* 가로로 줄바꿈되는 OTT 칩: 개수가 늘어도 열 높이를 밀지 않는다 */
 .providerList {
   display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .providerLink {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.65rem 0.9rem;
+  padding: 0.45rem 0.8rem 0.45rem 0.5rem;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 0.45rem;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
   color: #f5f5f5;
   font-size: 0.85rem;
@@ -170,12 +170,24 @@
     transform var(--duration-fast) var(--ease-out);
 }
 
+.providerBadge {
+  display: grid;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.35rem;
+  place-items: center;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
 a.providerLink:hover,
 a.providerLink:focus-visible {
   border-color: #e50914;
   background: rgba(229, 9, 20, 0.22);
   outline: none;
-  transform: translateX(2px);
+  transform: translateY(-1px);
 }
 
 .muted {
@@ -320,19 +332,28 @@ a.providerLink:focus-visible {
     font-size: 0.78rem;
   }
 
-  /* 본문은 한 열: [포스터 | 시청하기] 행 → 줄거리/정보 */
+  /* 모바일: [포스터 | 시청하기] 한 줄, 그 아래 줄거리·정보는 전체 폭 */
   .body {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.25rem;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: 1rem;
     padding: 1rem 1.25rem 1.5rem;
   }
 
   .side {
-    display: grid;
-    grid-template-columns: 7rem minmax(0, 1fr);
-    gap: 1rem;
-    align-items: start;
     margin-top: 0;
+  }
+
+  .main {
+    display: contents;
+  }
+
+  .watch {
+    grid-column: 2;
+  }
+
+  .main > section:not(.watch),
+  .infoList {
+    grid-column: 1 / -1;
   }
 
   .providerLink {

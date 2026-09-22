@@ -59,7 +59,8 @@
   border-radius: 0.45rem;
 }
 
-.chip { height: 2.4rem; }
+.chips { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+.chip { width: 6rem; height: 2.2rem; border-radius: 999px; }
 
 .main {
   display: flex;
@@ -84,7 +85,6 @@
   .hero { aspect-ratio: auto; min-height: 17rem; }
   .heroText { left: 1.25rem; bottom: 1rem; }
   .title { width: 12rem; height: 1.8rem; }
-  .body { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; padding: 1rem 1.25rem 1.5rem; }
-  .side { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 1rem; margin-top: 0; }
-  .poster { grid-row: span 3; margin: 0; }
+  .body { grid-template-columns: 7rem minmax(0, 1fr); gap: 1rem; padding: 1rem 1.25rem 1.5rem; }
+  .side { margin-top: 0; }
 }

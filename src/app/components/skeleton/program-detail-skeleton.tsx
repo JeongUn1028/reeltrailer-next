@@ -14,10 +14,12 @@ export default function ProgramDetailSkeleton() {
       <div className={styles.body}>
         <div className={styles.side}>
           <div className={styles.poster} />
-          <div className={`${styles.bar} ${styles.chip}`} />
-          <div className={`${styles.bar} ${styles.chip}`} />
         </div>
         <div className={styles.main}>
+          <div className={styles.chips}>
+            <div className={`${styles.bar} ${styles.chip}`} />
+            <div className={`${styles.bar} ${styles.chip}`} />
+          </div>
           <div className={`${styles.bar} ${styles.label}`} />
           <div className={`${styles.bar} ${styles.line}`} />
           <div className={`${styles.bar} ${styles.line}`} />

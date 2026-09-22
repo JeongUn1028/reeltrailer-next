@@ -51,6 +51,19 @@ describe("ProgramDetailView", () => {
     expect(within(info).getByText("유형").nextElementSibling).toHaveTextContent("영화");
   });
 
+  it("시청하기 목록은 본문(줄거리 위)에 놓이고 사이드에는 포스터만 남는다", () => {
+    render(<ProgramDetailView program={program} similar={[]} />);
+    const list = screen.getByRole("list", { name: "시청 가능한 OTT" });
+    const side = screen.getByRole("img", { name: "기생충 포스터" }).closest("aside")!;
+    expect(side).not.toContainElement(list);
+    // 본문 안에서 줄거리보다 앞에 위치
+    const overview = screen.getByText("줄거리 본문 텍스트");
+    expect(list.compareDocumentPosition(overview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // 배지(약어)와 이름을 함께 표시
+    expect(list).toHaveTextContent("N");
+    expect(list).toHaveTextContent("Netflix");
+  });
+
   it("시청 가능한 OTT는 중복을 합치고, 지원 OTT는 외부 링크로 만든다", () => {
     render(<ProgramDetailView program={program} similar={[]} />);
     const list = screen.getByRole("list", { name: "시청 가능한 OTT" });

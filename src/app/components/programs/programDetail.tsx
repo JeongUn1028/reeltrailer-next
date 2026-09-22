@@ -12,6 +12,7 @@ import {
 import { getProgramById, getSimilarPrograms } from "@/server/contents";
 import DetailHero from "./detail-hero";
 import Program from "./program";
+import { providerBadge } from "./provider-badges";
 import styles from "./programDetail.module.css";
 
 //* 비슷한 콘텐츠 그리드에 보여줄 최대 개수 (2줄)
@@ -114,38 +115,46 @@ export function ProgramDetailView({ program, similar }: ProgramDetailViewProps) 
               <div className={styles.posterFallback}>NO IMAGE</div>
             )}
           </div>
+        </aside>
 
+        <div className={styles.main}>
+          {/* 시청하기: OTT가 늘어도 칩이 줄바꿈될 뿐 왼쪽 열 높이에 영향을 주지 않는다 */}
           <section className={styles.watch}>
             <p className={styles.sectionLabel}>시청하기</p>
             {providers.length > 0 ? (
               <ul className={styles.providerList} aria-label="시청 가능한 OTT">
-                {providers.map(({ name, href }) => (
-                  <li key={name}>
-                    {href ? (
-                      <a
-                        href={href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.providerLink}
-                      >
-                        <span>{name}</span>
-                        <span aria-hidden="true">↗</span>
-                      </a>
-                    ) : (
-                      <span className={styles.providerLink}>
-                        <span>{name}</span>
-                      </span>
-                    )}
-                  </li>
-                ))}
+                {providers.map(({ name, href }) => {
+                  const badge = providerBadge(name);
+                  const content = (
+                    <>
+                      {badge && (
+                        <span className={`${styles.providerBadge} ${badge.className}`} aria-hidden="true">
+                          {badge.short}
+                        </span>
+                      )}
+                      {/* 표시 이름은 배지 라벨(Disney+, Wavve 등)로 통일하고, 모르는 제공자는 원래 이름 */}
+                      <span>{badge?.label ?? name}</span>
+                      {href && <span aria-hidden="true">↗</span>}
+                    </>
+                  );
+                  return (
+                    <li key={name}>
+                      {href ? (
+                        <a href={href} target="_blank" rel="noopener noreferrer" className={styles.providerLink}>
+                          {content}
+                        </a>
+                      ) : (
+                        <span className={styles.providerLink}>{content}</span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className={styles.muted}>현재 제공 중인 OTT가 없습니다.</p>
             )}
           </section>
-        </aside>
 
-        <div className={styles.main}>
           <section>
             <p className={styles.sectionLabel}>줄거리</p>
             <p className={styles.overview}>
