@@ -38,6 +38,7 @@
 }
 
 .playerMount,
+.playerMount > div,
 .playerMount > iframe {
   position: absolute;
   inset: 0;

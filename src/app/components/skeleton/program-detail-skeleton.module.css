@@ -87,4 +87,8 @@
   .title { width: 12rem; height: 1.8rem; }
   .body { grid-template-columns: 7rem minmax(0, 1fr); gap: 1rem; padding: 1rem 1.25rem 1.5rem; }
   .side { margin-top: 0; }
+  /* 실제 화면과 동일: [포스터 | 칩] 한 줄, 나머지는 전체 폭 */
+  .main { display: contents; }
+  .chips { grid-column: 2; }
+  .main > :not(.chips) { grid-column: 1 / -1; }
 }

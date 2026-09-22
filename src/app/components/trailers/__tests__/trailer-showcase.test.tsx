@@ -7,9 +7,11 @@ import type { ProgramSummary } from "@/app/types/types";
 const players: FakePlayer[] = [];
 class FakePlayer {
   options: { videoId: string; events?: { onStateChange?: (e: { data: number }) => void } };
+  element: HTMLElement;
   loadVideoById = vi.fn();
   destroy = vi.fn();
-  constructor(_el: HTMLElement, options: FakePlayer["options"]) {
+  constructor(el: HTMLElement, options: FakePlayer["options"]) {
+    this.element = el;
     this.options = options;
     players.push(this);
   }
@@ -63,6 +65,8 @@ describe("TrailerShowcase", () => {
     await user.click(screen.getByRole("button", { name: "첫 번째 예고편 재생" }));
     await waitFor(() => expect(players).toHaveLength(1));
     expect(players[0].options.videoId).toBe("k1");
+    // 플레이어에 넘긴 요소는 React가 관리하는 컨테이너(data-player-container)의 자식이어야 한다
+    expect(players[0].element.parentElement).toHaveAttribute("data-player-container");
 
     await user.click(screen.getByRole("option", { name: /세 번째/ }));
     expect(players[0].loadVideoById).toHaveBeenCalledWith("k3");

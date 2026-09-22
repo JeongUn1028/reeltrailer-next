@@ -87,6 +87,19 @@ describe("SearchBar 자동완성", () => {
     expect(screen.queryByText("기생충")).not.toBeInTheDocument();
   });
 
+  it("aria-controls는 드롭다운이 열려 있을 때만 listbox를 가리킨다", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => suggestions }));
+    const user = userEvent.setup();
+    renderBar();
+    const input = screen.getByRole("combobox");
+    expect(input).not.toHaveAttribute("aria-controls");
+    await user.type(input, "오징");
+    await waitFor(() => expect(screen.getByRole("listbox")).toBeInTheDocument());
+    expect(input).toHaveAttribute("aria-controls", screen.getByRole("listbox").id);
+    await user.keyboard("{Escape}");
+    expect(input).not.toHaveAttribute("aria-controls");
+  });
+
   it("자동완성 요청이 실패하면 안내 문구를 보여준다", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
     const user = userEvent.setup();

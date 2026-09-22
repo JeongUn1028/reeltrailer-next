@@ -18,7 +18,9 @@ type TrailerStageProps = {
 //* 선택된 예고편을 보여주는 플레이어 영역.
 //* 재생 전에는 썸네일 + 재생 버튼만 두어 YouTube 리소스(약 3MB)를 불러오지 않는다.
 export default function TrailerStage({ videoId, title, isPlaying, onPlay, onEnded }: TrailerStageProps) {
-  const mountRef = useRef<HTMLDivElement>(null);
+  // React가 관리하는 컨테이너. 플레이어는 이 안에 직접 만든 자식 div를 iframe으로 교체하므로
+  // React가 관리하는 노드를 외부 라이브러리가 바꾸는 일이 없다.
+  const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YT.Player | null>(null);
   const onEndedRef = useRef(onEnded);
   const [thumbnailFailed, setThumbnailFailed] = useState(false);
@@ -30,9 +32,10 @@ export default function TrailerStage({ videoId, title, isPlaying, onPlay, onEnde
 
   // 재생 시작: API 로드 → 플레이어 생성 (한 번만)
   useEffect(() => {
-    if (!isPlaying || playerRef.current || !mountRef.current) return;
+    if (!isPlaying || playerRef.current || !containerRef.current) return;
     let cancelled = false;
-    const mount = mountRef.current;
+    const mount = document.createElement("div");
+    containerRef.current.appendChild(mount);
 
     loadYouTubeApi()
       .then((yt) => {
@@ -55,6 +58,7 @@ export default function TrailerStage({ videoId, title, isPlaying, onPlay, onEnde
 
     return () => {
       cancelled = true;
+      if (!playerRef.current) mount.remove();
     };
     // videoId는 생성 시점 값만 쓰고, 이후 변경은 아래 effect가 처리
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -72,6 +76,7 @@ export default function TrailerStage({ videoId, title, isPlaying, onPlay, onEnde
     () => () => {
       playerRef.current?.destroy();
       playerRef.current = null;
+      containerRef.current?.replaceChildren();
     },
     [],
   );
@@ -85,8 +90,8 @@ export default function TrailerStage({ videoId, title, isPlaying, onPlay, onEnde
       <div className={styles.heroGlow} />
       <div className={styles.playerShell}>
         <div className={styles.playerFrame}>
-          {/* YT.Player가 이 div를 iframe으로 교체한다 */}
-          <div ref={mountRef} className={styles.playerMount} hidden={!isPlaying} />
+          {/* 컨테이너 안에 effect가 만든 div를 YT.Player가 iframe으로 교체한다 */}
+          <div ref={containerRef} className={styles.playerMount} data-player-container hidden={!isPlaying} />
 
           {!isPlaying && (
             <button

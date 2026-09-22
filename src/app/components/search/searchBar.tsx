@@ -198,7 +198,7 @@ function SearchInput({ initialSearch, autoFocus }: { initialSearch: string; auto
           onKeyDown={onKeyDown}
           role="combobox"
           aria-expanded={showDropdown}
-          aria-controls={listId}
+          aria-controls={showDropdown ? listId : undefined}
           aria-autocomplete="list"
           aria-activedescendant={activeIndex >= 0 ? optionId(activeIndex) : undefined}
           autoComplete="off"
