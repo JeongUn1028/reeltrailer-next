@@ -1,0 +1,33 @@
+.closeBar {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  height: 0;
+}
+
+.closeButton {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  background: rgba(10, 10, 10, 0.72);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.closeButton:hover,
+.closeButton:focus-visible {
+  background: rgba(229, 9, 20, 0.9);
+  transform: scale(1.06);
+  outline: none;
+}

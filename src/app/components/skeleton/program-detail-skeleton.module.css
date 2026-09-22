@@ -1,0 +1,90 @@
+.wrapper {
+  background: #151515;
+}
+
+.bar,
+.hero,
+.poster {
+  background: linear-gradient(110deg, #1f1f1f 25%, #303030 40%, #1f1f1f 55%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.hero {
+  position: relative;
+  aspect-ratio: 16 / 8;
+  min-height: 18rem;
+}
+
+.heroText {
+  position: absolute;
+  bottom: 1.75rem;
+  left: calc(2.5rem + 13.75rem + 2.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bar {
+  border-radius: 0.3rem;
+}
+
+.kicker { width: 4rem; height: 0.7rem; }
+.title { width: 18rem; height: 2.4rem; }
+.meta { width: 12rem; height: 0.9rem; }
+
+.body {
+  display: grid;
+  grid-template-columns: 13.75rem minmax(0, 1fr);
+  gap: 2.25rem;
+  padding: 1.75rem 2.5rem 2.25rem;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: -4.5rem;
+}
+
+.poster {
+  aspect-ratio: 2 / 3;
+  margin-bottom: 0.75rem;
+  border-radius: 0.45rem;
+}
+
+.chip { height: 2.4rem; }
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.label { width: 3.5rem; height: 0.7rem; margin-bottom: 0.3rem; }
+.line { width: 100%; height: 0.95rem; }
+.lineShort { width: 60%; height: 0.95rem; }
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+}
+
+.row { width: 100%; height: 1.6rem; }
+
+@media (max-width: 600px) {
+  .hero { aspect-ratio: auto; min-height: 17rem; }
+  .heroText { left: 1.25rem; bottom: 1rem; }
+  .title { width: 12rem; height: 1.8rem; }
+  .body { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; padding: 1rem 1.25rem 1.5rem; }
+  .side { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 1rem; margin-top: 0; }
+  .poster { grid-row: span 3; margin: 0; }
+}

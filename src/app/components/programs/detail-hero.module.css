@@ -1,0 +1,172 @@
+.hero {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  aspect-ratio: 16 / 8;
+  min-height: 18rem;
+  overflow: hidden;
+  background: #0f0f0f;
+}
+
+/* 재생 중에는 16:9로 바뀌어 영상이 잘리지 않게 한다 */
+.playing {
+  aspect-ratio: 16 / 9;
+}
+
+.media {
+  z-index: -2;
+  object-fit: cover;
+  object-position: center 25%;
+}
+
+/* backdrop이 없어 포스터를 배경으로 쓸 때는 흐리게 깔아 텍스트 가독성을 확보 */
+.posterAsBackdrop {
+  filter: blur(18px) brightness(0.7);
+  transform: scale(1.15);
+}
+
+.mediaFallback {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(229, 9, 20, 0.28), transparent 55%), #151515;
+}
+
+.shade {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(21, 21, 21, 0.15) 0%, rgba(21, 21, 21, 0.35) 45%, rgba(21, 21, 21, 0.96) 100%),
+    linear-gradient(90deg, rgba(21, 21, 21, 0.65) 0%, rgba(21, 21, 21, 0.1) 60%);
+}
+
+.iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.overlay {
+  position: absolute;
+  right: 2.5rem;
+  bottom: 1.75rem;
+  /* 본문의 포스터가 히어로 위로 겹쳐 올라오므로, 제목은 포스터 열 오른쪽부터 시작 */
+  left: calc(2.5rem + 13.75rem + 2.25rem);
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+@container detail (min-width: 72rem) {
+  .overlay {
+    right: 3.25rem;
+    bottom: 2rem;
+    left: calc(3.25rem + 16rem + 3rem);
+  }
+}
+
+@container detail (min-width: 88rem) {
+  .overlay {
+    right: 4rem;
+    left: calc(4rem + 19rem + 3rem);
+  }
+}
+
+.playing .overlay {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.playButton,
+.stopButton {
+  position: absolute;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(10, 10, 10, 0.7);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+}
+
+.playButton {
+  top: 50%;
+  left: 50%;
+  padding: 0.75rem 1.3rem 0.75rem 1.1rem;
+  transform: translate(-50%, -60%);
+}
+
+.playButton:hover,
+.playButton:focus-visible {
+  background: rgba(229, 9, 20, 0.92);
+  transform: translate(-50%, -60%) scale(1.05);
+  outline: none;
+}
+
+.playIcon {
+  width: 0;
+  height: 0;
+  border-top: 0.45rem solid transparent;
+  border-bottom: 0.45rem solid transparent;
+  border-left: 0.75rem solid currentColor;
+}
+
+.stopButton {
+  /* 모달의 ✕ 닫기 버튼(우측 상단)과 겹치지 않도록 그 왼쪽에 배치 */
+  top: 0.9rem;
+  right: 4.25rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.75rem;
+}
+
+.stopButton:hover,
+.stopButton:focus-visible {
+  background: rgba(229, 9, 20, 0.92);
+  outline: none;
+}
+
+@media (max-width: 600px) {
+  /* 모바일: 제목을 이미지 위에 겹치지 않고 히어로 하단에 일반 흐름으로 배치 */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    aspect-ratio: auto;
+    min-height: 17rem;
+    padding-top: 9.5rem;
+  }
+
+  .playing {
+    display: block;
+    aspect-ratio: 16 / 9;
+    min-height: 0;
+    padding-top: 0;
+  }
+
+  .overlay {
+    position: static;
+    padding: 0 1.25rem 1rem;
+  }
+
+  .playButton {
+    top: 4.75rem;
+    padding: 0.6rem 1rem 0.6rem 0.9rem;
+    font-size: 0.78rem;
+    transform: translate(-50%, 0);
+  }
+
+  .playButton:hover,
+  .playButton:focus-visible {
+    transform: translate(-50%, 0) scale(1.05);
+  }
+}

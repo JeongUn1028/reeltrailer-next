@@ -50,6 +50,7 @@ dialog {
   top: var(--dialog-gutter);
   left: 50%;
   width: min(calc(100vw - 2rem), clamp(58rem, max(55vw, 90vh), 96rem));
+  max-width: none;
   min-height: min(42rem, calc(100vh - var(--dialog-gutter) * 2));
   max-height: calc(100vh - var(--dialog-gutter) * 2);
   margin: 0;
@@ -108,11 +109,23 @@ dialog[open]::backdrop {
   }
 }
 
+/* 모바일: 전체 화면 시트로 전환 */
 @media (max-width: 700px) {
   dialog {
-    --dialog-gutter: 1rem;
-    width: calc(100vw - 1rem);
-    min-height: calc(100vh - 4rem);
-    border-radius: 0.6rem;
+    --dialog-gutter: 0px;
+    top: 0;
+    width: 100vw;
+    /* UA 스타일시트의 max-width: calc(100% - 6px - 2em) 해제 */
+    max-width: none;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  @starting-style {
+    dialog[open] {
+      transform: translateX(-50%) translateY(2rem) scale(1);
+    }
   }
 }
