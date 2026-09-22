@@ -11,20 +11,10 @@ const getPrograms = async (
   try {
     const parsedProviderId = providerId ? Number(providerId) : undefined;
 
-    if (
-      (title === "영화" || title === "프로그램") &&
-      parsedProviderId !== undefined
-    ) {
-      const newTitle = title === "영화" ? "movie" : "tvshow";
-      const programs = await getProgramList(parsedProviderId, newTitle, 20, 1);
-      return programs;
-    } else if (
-      (title === "영화" || title === "프로그램") &&
-      parsedProviderId === undefined
-    ) {
-      const newTitle = title === "영화" ? "movie" : "tvshow";
-      const programs = await getProgramList(Number("000"), newTitle, 20, 1);
-      return programs;
+    if (title === "영화" || title === "프로그램") {
+      const kind = title === "영화" ? "movie" : "tvshow";
+      // providerId가 없으면 전체 목록 조회
+      return getProgramList(parsedProviderId, kind, 20, 1);
     }
 
     const programs = await getProgramsByGenre({

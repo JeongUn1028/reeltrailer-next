@@ -33,7 +33,7 @@ export interface GetContentsParams {
 //* 특정 프로그램 목록 조회
 
 export async function getProgramList(
-  providerId: number,
+  providerId: number | undefined,
   kind: "movie" | "tvshow",
   limit = 20,
   page = 1,
@@ -58,11 +58,12 @@ export async function getMoviesList({
   >[]
 > {
   const skip = (page - 1) * limit;
-  const whereCodition =
-    providerId === Number("000") ? {} : { providers: { some: { providerId } } };
+  const whereCondition = providerId
+    ? { providers: { some: { providerId } } }
+    : {};
 
   const movies = await prisma.movie.findMany({
-    where: whereCodition,
+    where: whereCondition,
     select: {
       id: true,
       title: true,
@@ -100,10 +101,11 @@ export async function getTvShowsList({
   >[]
 > {
   const skip = (page - 1) * limit;
-  const whereCodition =
-    providerId === Number("000") ? {} : { providers: { some: { providerId } } };
+  const whereCondition = providerId
+    ? { providers: { some: { providerId } } }
+    : {};
   const tvShows = await prisma.tvShow.findMany({
-    where: whereCodition,
+    where: whereCondition,
     select: {
       id: true,
       title: true,

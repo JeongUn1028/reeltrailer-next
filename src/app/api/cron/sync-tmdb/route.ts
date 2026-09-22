@@ -4,8 +4,12 @@ import prisma from "@/server/prisma";
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
-//* 주요 OTT Providers IDs (Netflix: 8, Disney+: 337, Watcha: 97, Wavve: 356, Tving: 1796)
-const OTT_PROVIDER_IDS = "8|337|97|356|1796";
+//* 주요 OTT Providers IDs (Netflix: 8, Disney+: 337, Watcha: 97, Wavve: 356, Tving: 1883)
+//* src/config/ott-provider-ids.json과 동일한 값을 유지해야 함
+//* 1796(Netflix Standard with Ads)은 수집 범위에는 포함하되 저장 시 Netflix(8)로 병합함
+const NETFLIX_PROVIDER_ID = 8;
+const NETFLIX_WITH_ADS_PROVIDER_ID = 1796;
+const OTT_PROVIDER_IDS = `${NETFLIX_PROVIDER_ID}|${NETFLIX_WITH_ADS_PROVIDER_ID}|337|97|356|1883`;
 
 //* 영화/TV 각각 목표로 수집할 개수 (TMDB discover는 페이지당 20개씩 반환)
 const TARGET_ITEM_COUNT = 300;
@@ -27,7 +31,7 @@ const parseDate = (dateString: string): Date | null => {
 };
 
 //* TMDB에서 장르를 가져오는 헬퍼 함수
-export async function syncGenres() {
+async function syncGenres() {
   try {
     // 1. TMDB 영화 & TV 장르 목록 병렬 요청 (한국어 기준)
     const [movieGenresRes, tvGenresRes] = await Promise.all([
@@ -160,6 +164,28 @@ async function fetchDiscoverPages<T>(
   return results.slice(0, targetCount);
 }
 
+//* Netflix Standard with Ads(1796)를 Netflix(8)로 병합하고, 같은 provider가 중복되면 하나만 남기는 헬퍼 함수
+function mergeNetflixProviders(providers: TMDBProvider[]): TMDBProvider[] {
+  const merged = new Map<number, TMDBProvider>();
+
+  for (const provider of providers) {
+    if (provider.provider_id === NETFLIX_WITH_ADS_PROVIDER_ID) {
+      // 이미 일반 Netflix가 있으면 그것을 유지, 없으면 광고형 정보를 Netflix ID로 저장
+      if (!merged.has(NETFLIX_PROVIDER_ID)) {
+        merged.set(NETFLIX_PROVIDER_ID, {
+          ...provider,
+          provider_id: NETFLIX_PROVIDER_ID,
+          provider_name: "Netflix",
+        });
+      }
+      continue;
+    }
+    merged.set(provider.provider_id, provider);
+  }
+
+  return Array.from(merged.values());
+}
+
 //* 특정 영화/TV의 한국 Watch Providers(flatrate)를 가져오는 헬퍼 함수 (중복 요청 방지용으로 1회만 호출)
 async function fetchKrFlatrateProviders(
   type: "movie" | "tv",
@@ -170,7 +196,7 @@ async function fetchKrFlatrateProviders(
     { cache: "no-store" },
   );
   const data = await res.json();
-  return data.results?.KR?.flatrate || [];
+  return mergeNetflixProviders(data.results?.KR?.flatrate || []);
 }
 
 //* 아이템 배열을 batchSize만큼씩 끊어 Promise.all로 병렬 처리하고,
@@ -356,6 +382,12 @@ async function processMovie(movie: TMDBMovie) {
 //* TV 프로그램 한 편을 처리하는 함수 (provider 확인 → upsert → provider 저장까지 한 번에)
 async function processTvShow(tvShow: TMDBTVShow) {
   const tvProviders = await fetchKrFlatrateProviders("tv", tvShow.id);
+
+  // 영화와 동일하게, 한국 OTT 제공자가 없으면 저장하지 않고 패스
+  if (tvProviders.length === 0) {
+    return;
+  }
+
   const trailerKey = await fetchTrailerKey("tv", tvShow.id);
 
   await prisma.tvShow.upsert({
@@ -418,6 +450,11 @@ export async function GET(request: Request) {
 
   try {
     // -----------------------------------------
+    //  장르 동기화 (영화/TV upsert 시 genre connect가 실패하지 않도록 먼저 실행)
+    // -----------------------------------------
+    await syncGenres();
+
+    // -----------------------------------------
     //  TMDB 인기 영화 목록 Fetch (최대 300개, 15페이지)
     // -----------------------------------------
     const movies: TMDBMovie[] = await fetchDiscoverPages<TMDBMovie>(
@@ -440,6 +477,14 @@ export async function GET(request: Request) {
 
     // TV 프로그램들을 BATCH_SIZE개씩 끊어 Promise.all로 병렬 처리, 배치 사이에는 대기
     await processInBatches(tvShows, BATCH_SIZE, BATCH_DELAY_MS, processTvShow);
+
+    // -----------------------------------------
+    // 이전 동기화에서 저장된 Netflix Standard with Ads(1796) 행 정리
+    // (관계 테이블은 onDelete: Cascade로 함께 삭제됨. 위 단계에서 Netflix(8)로 이미 병합 저장됨)
+    // -----------------------------------------
+    await prisma.watchProvider.deleteMany({
+      where: { id: NETFLIX_WITH_ADS_PROVIDER_ID },
+    });
 
     return NextResponse.json({
       success: true,

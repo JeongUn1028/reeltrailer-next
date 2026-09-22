@@ -61,7 +61,7 @@ flowchart TD
 ### 데이터 흐름
 
 - 추천 목록과 상세 화면은 서버 컴포넌트에서 `src/server/contents.ts`의 Prisma 조회 함수를 사용합니다.
-- 예고편 캐러셀은 클라이언트 컴포넌트이며 `/api/getMovies`를 TanStack Query로 요청합니다.
+- 예고편 캐러셀은 클라이언트 컴포넌트이며 `/api/getMoviesList`를 TanStack Query로 요청합니다.
 - 캐러셀은 OTT slug를 쿼리 키에 포함하고, 기본적으로 5분 동안 데이터를 fresh 상태로 유지하며 10분 뒤 가비지 컬렉션합니다.
 - `Movie`와 `TvShow`는 별도 모델이지만 화면에서는 `mediaType: "movie" | "tvshow"`으로 통합합니다. 같은 TMDB ID가 서로 다른 유형에 존재할 수 있으므로 상세 URL에는 `kind`가 필요합니다.
 
@@ -158,7 +158,7 @@ npm start
 
 | Method | Endpoint                  | Query parameter                          | 설명                               |
 | ------ | ------------------------- | ---------------------------------------- | ---------------------------------- |
-| `GET`  | `/api/getMovies`          | `page`, `limit` 필수; `providerId` 선택  | 인기순 영화 목록 반환              |
+| `GET`  | `/api/getMoviesList`      | `page`, `limit` 필수; `providerId` 선택  | 인기순 영화 목록 반환              |
 | `GET`  | `/api/getTvShows`         | `page`, `limit`, `providerId` 선택       | 인기순 TV 프로그램 목록 반환       |
 | `GET`  | `/api/getProgramsByGenre` | `genre` 필수; `limit`, `providerId` 선택 | 장르별 영화와 TV 목록 반환         |
 | `GET`  | `/api/search`             | `q` 선택                                 | 제목을 대소문자 구분 없이 검색     |
