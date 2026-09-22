@@ -12,7 +12,9 @@
 }
 
 .standalonePage .detail {
-  width: min(58rem, 100%);
+  width: min(100%, clamp(58rem, max(55vw, 90vh), 96rem));
+  container-type: inline-size;
+  container-name: detail;
 }
 
 .detail::before {
@@ -279,5 +281,54 @@ a.providerLink:focus-visible {
     grid-template-columns: 1fr;
     gap: 1.25rem;
     margin-top: 1.5rem;
+  }
+}
+
+/* 모달/페이지 폭이 넓어지면(큰 모니터) 포스터·여백·글자를 함께 키운다 */
+@container detail (min-width: 72rem) {
+  .heroContent {
+    grid-template-columns: 17rem 1fr;
+    gap: 2.75rem;
+    padding: 3.25rem 3.25rem 2.5rem;
+  }
+
+  .heading h1 {
+    max-width: 40rem;
+    font-size: clamp(2.4rem, 3.4cqw, 4rem);
+  }
+
+  .originalTitle {
+    font-size: 1.05rem;
+  }
+
+  .meta {
+    font-size: 0.95rem;
+  }
+
+  .body {
+    padding: 2.25rem 3.25rem 3rem;
+  }
+
+  .overviewSection {
+    max-width: 60rem;
+  }
+
+  .overview {
+    font-size: 1.08rem;
+  }
+
+  .infoValue {
+    font-size: 1rem;
+  }
+}
+
+@container detail (min-width: 88rem) {
+  .heroContent {
+    grid-template-columns: 20rem 1fr;
+    padding: 4rem 4rem 3rem;
+  }
+
+  .body {
+    padding: 2.5rem 4rem 3.5rem;
   }
 }

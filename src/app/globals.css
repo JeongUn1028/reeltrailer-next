@@ -38,16 +38,25 @@ body {
   box-sizing: border-box;
 }
 
+/*
+ * 상세 모달 크기: 화면 높이에 비례해 커진다.
+ * - 폭: 58rem ~ 96rem 사이에서 뷰포트 폭의 55% 또는 높이의 90% 중 큰 값을 따라감 (FHD ≈ 66rem, QHD ≈ 88rem)
+ * - 높이: 화면 높이에서 위아래 여백만 뺀 만큼 사용 (기존 52rem 상한 제거)
+ * 모달 자체를 container로 두어 내부(programDetail)가 폭에 맞춰 레이아웃을 키운다.
+ */
 dialog {
+  --dialog-gutter: clamp(1rem, 3vh, 3rem);
   position: fixed;
-  top: 2rem;
+  top: var(--dialog-gutter);
   left: 50%;
-  width: min(58rem, calc(100vw - 2rem));
-  min-height: min(42rem, calc(100vh - 4rem));
-  max-height: min(52rem, calc(100vh - 4rem));
+  width: min(calc(100vw - 2rem), clamp(58rem, max(55vw, 90vh), 96rem));
+  min-height: min(42rem, calc(100vh - var(--dialog-gutter) * 2));
+  max-height: calc(100vh - var(--dialog-gutter) * 2);
   margin: 0;
   padding: 0;
   overflow: auto;
+  container-type: inline-size;
+  container-name: detail;
   transform: translateX(-50%);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 0.75rem;
@@ -101,10 +110,9 @@ dialog[open]::backdrop {
 
 @media (max-width: 700px) {
   dialog {
-    top: 1rem;
+    --dialog-gutter: 1rem;
     width: calc(100vw - 1rem);
     min-height: calc(100vh - 4rem);
-    max-height: calc(100vh - 2rem);
     border-radius: 0.6rem;
   }
 }
