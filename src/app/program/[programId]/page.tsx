@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ProgramDetail from "@/app/components/programs/programDetail";
 import styles from "@/app/components/programs/programDetail.module.css";
-import { isValidKind } from "@/app/lib/isValidKind";
+import { isProgramMediaType } from "@/app/types/types";
 import { getProgramById } from "@/server/contents";
 
 type PageProps = {
@@ -17,7 +17,7 @@ export async function generateMetadata({
   const { programId } = await params;
   const { kind } = await searchParams;
 
-  if (!/^[1-9]\d*$/.test(programId) || !isValidKind(kind)) {
+  if (!/^[1-9]\d*$/.test(programId) || !isProgramMediaType(kind)) {
     return { title: "프로그램을 찾을 수 없습니다", robots: { index: false } };
   }
 
@@ -53,7 +53,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const { programId } = await params;
   const { kind } = await searchParams;
 
-  if (!isValidKind(kind)) {
+  if (!isProgramMediaType(kind)) {
     notFound();
   }
 

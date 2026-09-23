@@ -48,8 +48,13 @@ export interface SearchSuggestion {
 export type ProgramSortKey = "popular" | "latest" | "rating";
 export type ProgramKindFilter = "all" | ProgramMediaType;
 
+export const PROGRAM_MEDIA_TYPES: ProgramMediaType[] = ["movie", "tvshow"];
 export const PROGRAM_SORT_KEYS: ProgramSortKey[] = ["popular", "latest", "rating"];
 export const PROGRAM_KIND_FILTERS: ProgramKindFilter[] = ["all", "movie", "tvshow"];
+
+export function isProgramMediaType(value: unknown): value is ProgramMediaType {
+  return PROGRAM_MEDIA_TYPES.includes(value as ProgramMediaType);
+}
 
 export function isProgramSortKey(value: unknown): value is ProgramSortKey {
   return PROGRAM_SORT_KEYS.includes(value as ProgramSortKey);

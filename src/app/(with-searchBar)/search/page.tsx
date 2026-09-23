@@ -1,5 +1,5 @@
 import SearchResults from "@/app/components/search/searchList";
-import ProgramsSkeleton from "@/app/components/skeleton/programs-skeleton";
+import ProgramsSkeleton from "@/app/components/programs/programs-skeleton";
 import { Suspense } from "react";
 
 export default function Page({

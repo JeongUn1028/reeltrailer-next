@@ -1,4 +1,4 @@
-import ProgramDetailSkeleton from "@/app/components/skeleton/program-detail-skeleton";
+import ProgramDetailSkeleton from "@/app/components/programs/program-detail-skeleton";
 import styles from "@/app/components/programs/programDetail.module.css";
 
 export default function Loading() {

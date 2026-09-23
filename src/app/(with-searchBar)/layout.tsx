@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import SearchBar from "../components/search/searchBar";
-import SearchBarSkeleton from "../components/skeleton/search-bar-skeleton";
+import SearchBarSkeleton from "../components/search/search-bar-skeleton";
 import styles from "./layout.module.css";
 
 export default function Layout({ children }: { children: React.ReactNode }) {

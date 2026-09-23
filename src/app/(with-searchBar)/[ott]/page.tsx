@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import TrailerShowcaseSection from "../../components/trailers/trailer-showcase-section";
 import RecommendSection from "../../components/programs/recommendSection";
 import TrailerShowcaseErrorFallback from "../../components/trailers/trailer-showcase-error-fallback";
-import TrailerShowcaseSkeleton from "../../components/skeleton/trailer-showcase-skeleton";
+import TrailerShowcaseSkeleton from "../../components/trailers/trailer-showcase-skeleton";
 import { ottSlugToProviderId } from "@/app/lib/programUrls";
 import { parseListSearchParams, type ListSearchParams } from "@/app/lib/listParams";
 import styles from "../page.module.css";
