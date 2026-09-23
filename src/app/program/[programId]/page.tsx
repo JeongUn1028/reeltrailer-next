@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import ProgramDetail from "@/app/components/programs/programDetail";
-import styles from "@/app/components/programs/programDetail.module.css";
+import ProgramDetail from "@/app/components/programs/program-detail";
+import styles from "@/app/components/programs/program-detail.module.css";
 import { isProgramMediaType } from "@/app/types/types";
 import { getProgramById } from "@/server/contents";
 

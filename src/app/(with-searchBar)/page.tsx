@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import TrailerShowcaseSection from "../components/trailers/trailer-showcase-section";
-import RecommendSection from "../components/programs/recommendSection";
+import RecommendSection from "../components/programs/recommend-section";
 import TrailerShowcaseErrorFallback from "../components/trailers/trailer-showcase-error-fallback";
 import TrailerShowcaseSkeleton from "../components/trailers/trailer-showcase-skeleton";
 import { parseListSearchParams, type ListSearchParams } from "@/app/lib/listParams";

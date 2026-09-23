@@ -42,7 +42,7 @@ body {
  * 상세 모달 크기: 화면 높이에 비례해 커진다.
  * - 폭: 58rem ~ 96rem 사이에서 뷰포트 폭의 55% 또는 높이의 90% 중 큰 값을 따라감 (FHD ≈ 66rem, QHD ≈ 88rem)
  * - 높이: 화면 높이에서 위아래 여백만 뺀 만큼 사용 (기존 52rem 상한 제거)
- * 모달 자체를 container로 두어 내부(programDetail)가 폭에 맞춰 레이아웃을 키운다.
+ * 모달 자체를 container로 두어 내부(program-detail)가 폭에 맞춰 레이아웃을 키운다.
  */
 dialog {
   --dialog-gutter: clamp(1rem, 3vh, 3rem);

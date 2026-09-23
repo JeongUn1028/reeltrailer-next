@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import SearchBar from "../components/search/searchBar";
+import SearchBar from "../components/search/search-bar";
 import SearchBarSkeleton from "../components/search/search-bar-skeleton";
 import styles from "./layout.module.css";
 

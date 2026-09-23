@@ -1,6 +1,6 @@
 import Logo from "./logo";
 import Tabs from "./tabs";
-import styles from "./index.module.css";
+import styles from "./header.module.css";
 
 export default function Header() {
   return (

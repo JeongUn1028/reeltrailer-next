@@ -5,7 +5,7 @@ import { SEARCH_PAGE_SIZE } from "@/app/lib/pageSizes";
 import { isProgramKindFilter, type ProgramKindFilter } from "@/app/types/types";
 import InfiniteProgramGrid from "@/app/components/programs/infinite-program-grid";
 import SearchSummary from "./search-summary";
-import styles from "./searchList.module.css";
+import styles from "./search-list.module.css";
 
 const TYPE_LABELS: Record<ProgramKindFilter, string> = {
   all: "전체",
