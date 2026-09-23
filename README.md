@@ -186,23 +186,12 @@ npm start
 
 | Method | Endpoint                  | Query parameter                          | 설명                               |
 | ------ | ------------------------- | ---------------------------------------- | ---------------------------------- |
-| `GET`  | `/api/getMoviesList`      | `page`, `limit`, `providerId`, `sort` 선택 | 영화 목록 반환 (`total` 포함)      |
-| `GET`  | `/api/getTvShows`         | `page`, `limit`, `providerId`, `sort` 선택 | TV 프로그램 목록 반환              |
-| `GET`  | `/api/getProgramsByGenre` | `genre`(이름 또는 ID) 필수; `limit`, `providerId`, `sort` 선택 | 장르별 영화와 TV 목록 반환 |
 | `GET`  | `/api/browse`             | `ott`, `kind`, `genre`, `sort`, `page`, `limit` 선택 | 목록 페이지용 `{ items, total, page, limit, hasMore }` |
 | `GET`  | `/api/search`             | `q`, `providerId`, `kind`, `sort`(relevance/popular/latest), `page`, `limit` 선택 | 검색 `{ items, page, hasMore, total, fuzzy }` (항목에 `rank`, `similarity` 포함) |
 | `GET`  | `/api/search/suggest`     | `q`(1글자 이상), `providerId` 선택       | 자동완성용 경량 결과 (최대 8개, OTT 포함) |
-| `GET`  | `/api/getProgramById`     | `id`, `kind` 필수                        | 영화 또는 TV 프로그램 상세 반환    |
 | `GET`  | `/api/cron/sync-tmdb`     | 없음                                     | TMDB 동기화 실행, Bearer 인증 필요 |
 
-`kind`는 `movie` 또는 `tvshow`만, `sort`는 `popular`(기본) · `latest` · `rating`만 허용합니다. 카탈로그 기반 API 응답에는 `Cache-Control: s-maxage=3600, stale-while-revalidate=86400`이 붙습니다. 검색은 유형별로 `limit`개씩(기본 20) 페이지 단위로 조회해 인기순으로 합치므로 `kind=all`이면 한 페이지에 최대 `2×limit`개가 옵니다. 빈 검색어는 빈 목록을 반환합니다. 장르 API는 아래처럼 콘텐츠 유형별 배열을 반환합니다.
-
-```json
-{
-  "movies": [{ "id": 1, "mediaType": "movie" }],
-  "tvShows": [{ "id": 2, "mediaType": "tvshow" }]
-}
-```
+`kind`는 `all`(기본) · `movie` · `tvshow`만, `/api/browse`의 `sort`는 `popular`(기본) · `latest` · `rating`, `/api/search`의 `sort`는 `relevance`(기본) · `popular` · `latest`만 허용합니다. 카탈로그 기반 API 응답에는 `Cache-Control: s-maxage=3600, stale-while-revalidate=86400`이 붙습니다. 검색은 유형별로 `limit`개씩(기본 20) 페이지 단위로 조회해 `sort` 기준으로 합치므로 `kind=all`이면 한 페이지에 최대 `2×limit`개가 옵니다. 빈 검색어는 빈 목록을 반환합니다.
 
 ## TMDB 동기화
 

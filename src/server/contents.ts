@@ -225,17 +225,6 @@ export async function getPrograms({
   return { items, total: movieTotal + tvTotal, page, hasMore };
 }
 
-//* 특정 유형의 목록 (기존 API 호환용)
-export async function getProgramList(
-  providerId: number | undefined,
-  kind: ProgramMediaType,
-  limit = 20,
-  page = 1,
-): Promise<ProgramSummary[]> {
-  const { items } = await getPrograms({ providerId, kind, limit, page });
-  return items;
-}
-
 //* 사이트맵용: 전체 콘텐츠의 id/유형/갱신일만 조회
 export async function getAllProgramRefs(): Promise<
   { id: number; mediaType: ProgramMediaType; updatedAt: Date }[]
