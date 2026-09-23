@@ -90,6 +90,13 @@ describe("processInBatches", () => {
     expect(maxInFlight).toBe(3);
   });
 
+  it("describe를 주지 않으면 실패 내역에 기본 라벨로 기록한다", async () => {
+    const result = await processInBatches([1], 1, 0, async () => {
+      throw new Error("boom");
+    });
+    expect(result.errors).toEqual([{ item: "item", message: "boom" }]);
+  });
+
   it("마지막 배치 뒤에는 대기하지 않는다", async () => {
     vi.useFakeTimers();
     const promise = processInBatches([1, 2], 2, 1000, async () => {});
