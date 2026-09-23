@@ -164,8 +164,14 @@ npm run dev
 # ESLint 검사
 npm run lint
 
+# 타입 검사
+npm run type-check
+
 # 단위 테스트 (Vitest)
 npm test
+
+# 테스트 watch 모드
+npm run test:watch
 
 # Prisma Client 생성 후 프로덕션 빌드
 npm run build
@@ -173,6 +179,8 @@ npm run build
 # 프로덕션 서버 실행
 npm start
 ```
+
+`lint`, `type-check`, `test`는 GitHub Actions(`.github/workflows/ci.yml`)에서 push와 Pull Request마다 자동으로 실행됩니다.
 
 ## API
 
