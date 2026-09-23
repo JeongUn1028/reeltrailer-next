@@ -13,7 +13,7 @@ import {
   removeRecentSearch,
 } from "@/app/lib/recentSearches";
 import ProviderBadges from "@/app/components/programs/provider-badges";
-import styles from "./searchBar.module.css";
+import styles from "./search-bar.module.css";
 
 // URL의 `q`가 바뀔 때마다 SearchInput을 완전히 새로 마운트하기 위해
 // key를 q 값으로 지정한다.

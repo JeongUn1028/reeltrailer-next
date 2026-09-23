@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/",
 }));
 
-import SearchBar from "../searchBar";
+import SearchBar from "../search-bar";
 
 const suggestions = [
   { id: 1, mediaType: "tvshow", title: "오징어 게임", posterPath: null, releaseDate: "2021-09-17", providers: [{ id: 8, providerName: "Netflix", logoPath: null }] },

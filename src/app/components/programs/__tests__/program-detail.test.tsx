@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
-import { ProgramDetailView } from "../programDetail";
+import { ProgramDetailView } from "../program-detail";
 import type { ProgramDetail, ProgramSummary } from "@/app/types/types";
 
 const program: ProgramDetail = {

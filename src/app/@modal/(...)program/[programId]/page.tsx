@@ -1,5 +1,5 @@
 import Link from "next/link";
-import ProgramDetail from "@/app/components/programs/programDetail";
+import ProgramDetail from "@/app/components/programs/program-detail";
 import Modal from "@/app/components/modal/modal";
 import { isProgramMediaType } from "@/app/types/types";
 import styles from "./page.module.css";

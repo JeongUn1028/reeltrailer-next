@@ -13,7 +13,7 @@ import { getProgramById, getSimilarPrograms } from "@/server/contents";
 import DetailHero from "./detail-hero";
 import Program from "./program";
 import { providerBadge } from "./provider-badges";
-import styles from "./programDetail.module.css";
+import styles from "./program-detail.module.css";
 
 //* 비슷한 콘텐츠 그리드에 보여줄 최대 개수 (2줄)
 const SIMILAR_LIMIT = 12;

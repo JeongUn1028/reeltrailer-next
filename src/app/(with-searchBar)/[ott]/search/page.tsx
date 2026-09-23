@@ -1,4 +1,4 @@
-import SearchResults from "@/app/components/search/searchList";
+import SearchResults from "@/app/components/search/search-list";
 import ProgramsSkeleton from "@/app/components/programs/programs-skeleton";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
