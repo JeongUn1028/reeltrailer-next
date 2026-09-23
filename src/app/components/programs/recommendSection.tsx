@@ -6,7 +6,7 @@ import { browseHref, genreLabel } from "@/app/lib/programUrls";
 import ProgramRow from "./program-row";
 import RevealRow from "./reveal-row";
 import FilterBar from "./filter-bar";
-import ProgramsSkeleton from "../skeleton/programs-skeleton";
+import ProgramsSkeleton from "../programs/programs-skeleton";
 import RecommendErrorFallback from "./recommend-error-fallback";
 
 //* 행당 카드 수. 20 → 16으로 줄여 페이지 길이와 중복 노출을 낮춘다 (나머지는 "더 보기")
