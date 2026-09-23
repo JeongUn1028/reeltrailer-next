@@ -1,7 +1,7 @@
 import Link from "next/link";
 import ProgramDetail from "@/app/components/programs/programDetail";
 import Modal from "@/app/components/modal/modal";
-import { isValidKind } from "@/app/lib/isValidKind";
+import { isProgramMediaType } from "@/app/types/types";
 import styles from "./page.module.css";
 
 export default async function Page({
@@ -13,7 +13,7 @@ export default async function Page({
 }) {
   const { programId } = await params;
   const { kind } = await searchParams;
-  if (!isValidKind(kind)) {
+  if (!isProgramMediaType(kind)) {
     return (
       <Modal>
         <section
