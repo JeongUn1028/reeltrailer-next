@@ -109,7 +109,7 @@ npm install
 DATABASE_URL="postgresql://user:password@host:5432/database"
 DIRECT_URL="postgresql://user:password@host:5432/database"
 TMDB_API_KEY="your-tmdb-api-key"
-CRON_SECRET_KEY="your-cron-secret"
+CRON_SECRET="your-cron-secret"
 NEXT_PUBLIC_API_URL="http://localhost:3000/api"
 NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 # 선택: 동기화 결과를 받을 Discord/Slack incoming webhook
@@ -121,7 +121,7 @@ SYNC_WEBHOOK_URL=""
 | `DATABASE_URL`         | 애플리케이션에서 사용하는 PostgreSQL 연결 문자열                  |
 | `DIRECT_URL`           | Prisma migration에 사용하는 직접 PostgreSQL 연결 문자열           |
 | `TMDB_API_KEY`         | TMDB 콘텐츠, 예고편, 제공자 정보 동기화                           |
-| `CRON_SECRET_KEY`      | 동기화 endpoint의 Bearer 인증 토큰                                |
+| `CRON_SECRET`          | 동기화 endpoint의 Bearer 인증 토큰. Vercel Cron은 이 이름일 때만 헤더를 붙인다 |
 | `NEXT_PUBLIC_API_URL`  | (선택) 외부에서 API를 호출할 때의 기준 URL. 앱 내부에서는 더 이상 사용하지 않음 |
 | `SYNC_WEBHOOK_URL`     | (선택) Cron 동기화 결과 알림용 웹훅 URL                           |
 | `NEXT_PUBLIC_SITE_URL` | metadata, canonical URL, sitemap, robots 생성에 사용할 서비스 URL |
@@ -231,17 +231,19 @@ Cron은 실행 시간 예산(300초) 안에서 세 단계를 수행합니다.
 
 1. 현재 인기 상위 영화/TV 각 300건 갱신
 2. 최근 30일 신작 영화/TV 각 최대 300건 추가
-3. `updatedAt`이 가장 오래된 콘텐츠부터 최대 800건의 국내 제공자를 재조회해, 제공이 끝난 콘텐츠는 삭제하고 나머지는 관계를 갱신합니다 (남은 시간에 맞춰 개수가 줄어듭니다). 33,000건 기준 약 40일에 한 바퀴 돕니다.
+3. `updatedAt`이 가장 오래된 콘텐츠부터 최대 800건의 국내 제공자를 재조회해, 대상 OTT(Netflix·Disney+·Tving·Watcha·Wavve) 제공이 끝났거나 TMDB에서 삭제된(404) 콘텐츠는 삭제하고 나머지는 관계를 갱신합니다 (남은 시간에 맞춰 개수가 줄어듭니다). 33,000건 기준 약 40일에 한 바퀴 돕니다. 조회에 실패한 항목도 순환 뒤로 보내 다음 바퀴에 다시 확인합니다.
+
+1·2단계도 실행 시간 예산(280초)을 넘기면 남은 항목을 건너뛰고(결과의 `skipped`), 캐시 무효화와 알림은 실패하더라도 항상 실행합니다.
 
 Netflix Standard with Ads(1796)는 Netflix(8)로 병합됩니다. 완료 후 `contents` 캐시 태그를 무효화하고, `SYNC_WEBHOOK_URL`이 설정되어 있으면 결과 요약을 Discord/Slack 웹훅으로 전송합니다.
 
-라우트의 `maxDuration`은 300초입니다. Vercel Hobby 플랜은 기본 60초가 상한이므로 프로젝트 설정에서 **Fluid compute를 활성화**해야 합니다(무료). Cron 요청은 다음과 같이 `CRON_SECRET_KEY`와 일치하는 Authorization 헤더가 있어야 합니다.
+라우트의 `maxDuration`은 300초입니다. Vercel Hobby 플랜은 기본 60초가 상한이므로 프로젝트 설정에서 **Fluid compute를 활성화**해야 합니다(무료). Cron 요청은 다음과 같이 `CRON_SECRET`과 일치하는 Authorization 헤더가 있어야 합니다.
 
 ```http
-Authorization: Bearer <CRON_SECRET_KEY>
+Authorization: Bearer <CRON_SECRET>
 ```
 
-Vercel 배포 시 `DATABASE_URL`, `DIRECT_URL`, `TMDB_API_KEY`, `CRON_SECRET_KEY`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SITE_URL`을 프로젝트 환경 변수에 설정해야 합니다.
+Vercel 배포 시 `DATABASE_URL`, `DIRECT_URL`, `TMDB_API_KEY`, `CRON_SECRET`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SITE_URL`을 프로젝트 환경 변수에 설정해야 합니다.
 
 ## 프로젝트 구조
 

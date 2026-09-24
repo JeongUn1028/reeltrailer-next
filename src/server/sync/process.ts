@@ -1,7 +1,7 @@
 //* TMDB 항목을 DB에 저장하는 로직. Cron 라우트와 백필 스크립트가 공유한다.
 import type { PrismaClient } from "@prisma/client";
 import type { TMDBProvider } from "./helpers";
-import { parseDate } from "./helpers";
+import { hasSupportedProvider, parseDate } from "./helpers";
 import type { TmdbClient, TmdbKind, TMDBMovie, TMDBTVShow } from "./tmdb";
 import { buildSearchText } from "@/server/search/normalize";
 
@@ -76,7 +76,7 @@ export async function processMovie(
   movie: TMDBMovie,
 ): Promise<ProcessOutcome> {
   const providers = await tmdb.fetchKrFlatrateProviders("movie", movie.id);
-  if (providers.length === 0) return "skipped";
+  if (!hasSupportedProvider(providers)) return "skipped";
 
   const [trailerKey, englishTitle] = await Promise.all([
     tmdb.fetchTrailerKey("movie", movie.id),
@@ -114,7 +114,7 @@ export async function processTvShow(
   tvShow: TMDBTVShow,
 ): Promise<ProcessOutcome> {
   const providers = await tmdb.fetchKrFlatrateProviders("tv", tvShow.id);
-  if (providers.length === 0) return "skipped";
+  if (!hasSupportedProvider(providers)) return "skipped";
 
   const [trailerKey, englishTitle] = await Promise.all([
     tmdb.fetchTrailerKey("tv", tvShow.id),

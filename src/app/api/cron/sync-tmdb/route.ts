@@ -5,6 +5,7 @@ import { CONTENTS_TAG } from "@/server/contents";
 import { NETFLIX_WITH_ADS_PROVIDER_ID, processInBatches } from "@/server/sync/helpers";
 import { TmdbClient } from "@/server/sync/tmdb";
 import { processMovie, processTvShow, syncGenres, syncWatchProviders } from "@/server/sync/process";
+import { isAuthorizedCronRequest } from "@/server/sync/cron-auth";
 import { chooseRecheckBudget, splitRecheckResults, type RecheckResult } from "@/server/sync/recheck";
 import { notifySyncResult } from "@/server/sync/notify";
 
@@ -29,15 +30,16 @@ const RECHECK_MS_PER_REQUEST = 120;
 const BATCH_SIZE = 8;
 const BATCH_DELAY_MS = 400;
 
-//* 전체 예산에서 재검증에 남겨둘 최소 시간과 안전 마진
+//* 새 작업을 시작하지 않는 기준 시각. 남은 20초는 캐시 무효화·알림 등 마무리에 쓴다
 const TIME_BUDGET_MS = (maxDuration - 20) * 1000;
+//* 재검증은 조회가 끝난 뒤 DB 쓰기가 이어지므로 그만큼 더 일찍 멈춘다
+const RECHECK_WRITE_RESERVE_MS = 30_000;
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 
 export async function GET(request: Request) {
-  //* 1. Vercel Cron Security Key 검증
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET_KEY}`) {
+  //* 1. Vercel Cron 인증 (Vercel은 CRON_SECRET 이름의 환경 변수만 헤더로 보낸다)
+  if (!isAuthorizedCronRequest(request.headers.get("authorization"), process.env.CRON_SECRET)) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
@@ -48,6 +50,7 @@ export async function GET(request: Request) {
 
   const startedAt = Date.now();
   const elapsed = () => Date.now() - startedAt;
+  const isOutOfTime = () => elapsed() > TIME_BUDGET_MS;
   const tmdb = new TmdbClient(apiKey);
   const deps = { prisma, tmdb };
 
@@ -71,6 +74,7 @@ export async function GET(request: Request) {
       BATCH_DELAY_MS,
       (m) => processMovie(deps, m).then(() => undefined),
       (m) => `movie:${m.id} ${m.title}`,
+      isOutOfTime,
     );
     const tvResult = await processInBatches(
       tvShows,
@@ -78,6 +82,7 @@ export async function GET(request: Request) {
       BATCH_DELAY_MS,
       (t) => processTvShow(deps, t).then(() => undefined),
       (t) => `tv:${t.id} ${t.name}`,
+      isOutOfTime,
     );
 
     // ---------- 3) 순환 재검증 ----------
@@ -86,13 +91,10 @@ export async function GET(request: Request) {
       msPerRequest: RECHECK_MS_PER_REQUEST,
       max: RECHECK_MAX,
     });
-    const recheck = await recheckOldest(deps, budget);
+    const recheck = await recheckOldest(deps, budget, () => elapsed() > TIME_BUDGET_MS - RECHECK_WRITE_RESERVE_MS);
 
     // 이전 동기화에서 저장된 Netflix Standard with Ads(1796) 행 정리 (관계는 Cascade로 삭제)
     await prisma.watchProvider.deleteMany({ where: { id: NETFLIX_WITH_ADS_PROVIDER_ID } });
-
-    // 카탈로그/상세 캐시 무효화
-    revalidateTag(CONTENTS_TAG, "max");
 
     const errors = [...movieResult.errors, ...tvResult.errors];
     for (const error of errors) {
@@ -104,8 +106,18 @@ export async function GET(request: Request) {
       success: true,
       durationMs,
       genres: genreCount,
-      movies: { fetched: movies.length, succeeded: movieResult.succeeded, failed: movieResult.failed },
-      tvShows: { fetched: tvShows.length, succeeded: tvResult.succeeded, failed: tvResult.failed },
+      movies: {
+        fetched: movies.length,
+        succeeded: movieResult.succeeded,
+        failed: movieResult.failed,
+        skipped: movieResult.skipped,
+      },
+      tvShows: {
+        fetched: tvShows.length,
+        succeeded: tvResult.succeeded,
+        failed: tvResult.failed,
+        skipped: tvResult.skipped,
+      },
       recheck,
     };
 
@@ -114,7 +126,14 @@ export async function GET(request: Request) {
       durationMs,
       movies: { ...summary.movies, removed: recheck.movies.removed },
       tvShows: { ...summary.tvShows, removed: recheck.tvShows.removed },
-      message: `재검증 ${recheck.checked}건 (실패 ${recheck.failed})`,
+      message: [
+        `재검증 ${recheck.checked}건 (실패 ${recheck.failed})`,
+        movieResult.skipped + tvResult.skipped > 0
+          ? `시간 제한으로 건너뜀: 영화 ${movieResult.skipped}, TV ${tvResult.skipped}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join(" / "),
       errorSamples: errors.slice(0, 5).map((e) => `${e.item}: ${e.message}`),
     });
 
@@ -132,6 +151,9 @@ export async function GET(request: Request) {
       message: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.json({ message: "TMDB Sync Failed" }, { status: 500 });
+  } finally {
+    // 중간에 실패해도 그때까지 저장한 데이터가 화면에 반영되도록 캐시는 항상 무효화한다
+    revalidateTag(CONTENTS_TAG, "max");
   }
 }
 
@@ -142,10 +164,12 @@ function dedupeById<T extends { id: number }>(items: T[]): T[] {
 }
 
 //* updatedAt이 가장 오래된 콘텐츠부터 budget건의 제공자를 다시 조회한다.
-//* 제공자가 없으면 삭제, 있으면 관계를 갱신하고 updatedAt을 지금으로 올려 순환에서 뒤로 보낸다.
+//* 대상 OTT 제공이 끝났으면 삭제, 아니면 관계를 갱신한다. 조회에 실패한 항목도 updatedAt을 올려
+//* 순환에서 뒤로 보낸다 — 그러지 않으면 계속 실패하는 항목이 매일 예산을 먼저 차지한다.
 async function recheckOldest(
   deps: { prisma: typeof prisma; tmdb: TmdbClient },
   budget: number,
+  shouldStop: () => boolean,
 ) {
   const empty = { checked: 0, failed: 0, movies: { removed: 0 }, tvShows: { removed: 0 } };
   if (budget <= 0) return empty;
@@ -164,29 +188,43 @@ async function recheckOldest(
 
   const run = async (kind: "movie" | "tv", ids: number[]) => {
     const results: RecheckResult[] = [];
-    await processInBatches(ids, BATCH_SIZE, BATCH_DELAY_MS, async (id) => {
-      try {
-        results.push({ id, providers: await deps.tmdb.fetchKrFlatrateProviders(kind, id) });
-      } catch (error) {
-        results.push({ id, error });
-      }
-    });
+    await processInBatches(
+      ids,
+      BATCH_SIZE,
+      BATCH_DELAY_MS,
+      async (id) => {
+        try {
+          results.push({ id, providers: await deps.tmdb.fetchKrFlatrateProviders(kind, id) });
+        } catch (error) {
+          results.push({ id, error });
+        }
+      },
+      undefined,
+      shouldStop,
+    );
     const { toDelete, toKeep, failed } = splitRecheckResults(results);
 
+    const saved = await processInBatches(
+      toKeep,
+      BATCH_SIZE,
+      0,
+      ({ id, providers }) => syncWatchProviders(deps.prisma, providers, { kind, id }),
+      ({ id }) => `${kind}:${id} 제공자 갱신`,
+    );
+    for (const error of saved.errors) {
+      console.error(`[sync] 재검증 실패: ${error.item} - ${error.message}`);
+    }
+    const checkedIds = [...toKeep.map((item) => item.id), ...failed];
+    const touch = { where: { id: { in: checkedIds } }, data: { updatedAt: new Date() } };
+    const remove = { where: { id: { in: toDelete } } };
     if (kind === "movie") {
-      await deps.prisma.movie.deleteMany({ where: { id: { in: toDelete } } });
+      await deps.prisma.movie.deleteMany(remove);
+      await deps.prisma.movie.updateMany(touch);
     } else {
-      await deps.prisma.tvShow.deleteMany({ where: { id: { in: toDelete } } });
+      await deps.prisma.tvShow.deleteMany(remove);
+      await deps.prisma.tvShow.updateMany(touch);
     }
-    for (const { id, providers } of toKeep) {
-      await syncWatchProviders(deps.prisma, providers, { kind, id });
-      if (kind === "movie") {
-        await deps.prisma.movie.update({ where: { id }, data: { updatedAt: new Date() } });
-      } else {
-        await deps.prisma.tvShow.update({ where: { id }, data: { updatedAt: new Date() } });
-      }
-    }
-    return { removed: toDelete.length, failed: failed.length, checked: ids.length };
+    return { removed: toDelete.length, failed: failed.length, checked: results.length };
   };
 
   const [movies, tvShows] = [

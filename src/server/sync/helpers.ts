@@ -3,6 +3,9 @@
 export const NETFLIX_PROVIDER_ID = 8;
 export const NETFLIX_WITH_ADS_PROVIDER_ID = 1796;
 
+//* 서비스 대상 OTT (src/config/ott-provider-ids.json과 같은 값, 테스트로 일치를 확인한다)
+export const SUPPORTED_PROVIDER_IDS: ReadonlySet<number> = new Set([NETFLIX_PROVIDER_ID, 337, 97, 356, 1883]);
+
 export interface TMDBProvider {
   provider_name: string;
   provider_id: number;
@@ -45,24 +48,36 @@ export function mergeNetflixProviders(providers: TMDBProvider[]): TMDBProvider[]
   return Array.from(merged.values());
 }
 
+//* 대상 OTT 중 하나라도 제공하는지. 쿠팡플레이·Apple TV+ 등에만 남은 작품은 제공 종료로 본다
+export const hasSupportedProvider = (providers: TMDBProvider[]): boolean =>
+  providers.some((provider) => SUPPORTED_PROVIDER_IDS.has(provider.provider_id));
+
 export interface BatchResult {
   succeeded: number;
   failed: number;
+  //* shouldStop으로 중단되어 처리하지 못한 개수
+  skipped: number;
   errors: { item: string; message: string }[];
 }
 
 //* 아이템 배열을 batchSize만큼씩 끊어 병렬 처리하고, 배치 사이에 delayMs만큼 대기한다.
 //* 한 아이템이 실패해도 나머지는 계속 진행되며, 실패 내역은 결과에 모아 반환한다.
+//* shouldStop이 true를 돌려주면 다음 배치부터 처리하지 않는다 (실행 시간 제한 대비).
 export async function processInBatches<T>(
   items: T[],
   batchSize: number,
   delayMs: number,
   processFn: (item: T) => Promise<void>,
   describe: (item: T) => string = () => "item",
+  shouldStop: () => boolean = () => false,
 ): Promise<BatchResult> {
-  const result: BatchResult = { succeeded: 0, failed: 0, errors: [] };
+  const result: BatchResult = { succeeded: 0, failed: 0, skipped: 0, errors: [] };
 
   for (let i = 0; i < items.length; i += batchSize) {
+    if (shouldStop()) {
+      result.skipped = items.length - i;
+      break;
+    }
     const batch = items.slice(i, i + batchSize);
 
     await Promise.all(
