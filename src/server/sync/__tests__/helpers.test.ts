@@ -1,11 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
+import providerSlugs from "@/config/ott-provider-ids.json";
 import {
+  hasSupportedProvider,
   isFailureRateAcceptable,
   mergeNetflixProviders,
   NETFLIX_PROVIDER_ID,
   NETFLIX_WITH_ADS_PROVIDER_ID,
   parseDate,
   processInBatches,
+  SUPPORTED_PROVIDER_IDS,
   type TMDBProvider,
 } from "../helpers";
 
@@ -43,6 +46,21 @@ describe("mergeNetflixProviders", () => {
       provider(356, "Wavve"),
     ]);
     expect(result.map((p) => p.provider_id)).toEqual([1883, 356]);
+  });
+});
+
+describe("hasSupportedProvider", () => {
+  it("지원 OTT 목록은 ott-provider-ids.json과 같다", () => {
+    expect([...SUPPORTED_PROVIDER_IDS].sort()).toEqual(Object.values(providerSlugs).map(Number).sort());
+  });
+
+  it("지원 OTT가 하나라도 있으면 true", () => {
+    expect(hasSupportedProvider([provider(2, "Apple TV"), provider(1883, "TVING")])).toBe(true);
+  });
+
+  it("지원하지 않는 OTT에만 있으면 false", () => {
+    expect(hasSupportedProvider([provider(2, "Apple TV"), provider(119, "Amazon Prime Video")])).toBe(false);
+    expect(hasSupportedProvider([])).toBe(false);
   });
 });
 
@@ -97,6 +115,23 @@ describe("processInBatches", () => {
     expect(result.errors).toEqual([{ item: "item", message: "boom" }]);
   });
 
+  it("shouldStop이 true가 되면 남은 배치를 처리하지 않고 skipped로 센다", async () => {
+    const processed: number[] = [];
+    const result = await processInBatches(
+      [1, 2, 3, 4, 5],
+      2,
+      0,
+      async (n) => {
+        processed.push(n);
+      },
+      undefined,
+      () => processed.length >= 2,
+    );
+
+    expect(processed).toEqual([1, 2]);
+    expect(result).toMatchObject({ succeeded: 2, failed: 0, skipped: 3 });
+  });
+
   it("마지막 배치 뒤에는 대기하지 않는다", async () => {
     vi.useFakeTimers();
     const promise = processInBatches([1, 2], 2, 1000, async () => {});
@@ -109,14 +144,14 @@ describe("processInBatches", () => {
 
 describe("isFailureRateAcceptable", () => {
   it("실패율이 임계값 이하이면 true", () => {
-    expect(isFailureRateAcceptable({ succeeded: 95, failed: 5, errors: [] }, 0.1)).toBe(true);
+    expect(isFailureRateAcceptable({ succeeded: 95, failed: 5, skipped: 0, errors: [] }, 0.1)).toBe(true);
   });
 
   it("실패율이 임계값을 넘으면 false", () => {
-    expect(isFailureRateAcceptable({ succeeded: 80, failed: 20, errors: [] }, 0.1)).toBe(false);
+    expect(isFailureRateAcceptable({ succeeded: 80, failed: 20, skipped: 0, errors: [] }, 0.1)).toBe(false);
   });
 
   it("처리한 아이템이 없으면 false (삭제 방지)", () => {
-    expect(isFailureRateAcceptable({ succeeded: 0, failed: 0, errors: [] }, 0.1)).toBe(false);
+    expect(isFailureRateAcceptable({ succeeded: 0, failed: 0, skipped: 0, errors: [] }, 0.1)).toBe(false);
   });
 });

@@ -51,6 +51,17 @@ interface DiscoverResponse<T> {
   total_results?: number;
 }
 
+//* 응답 상태 코드로 분기할 수 있도록 status를 담는다 (예: 404는 TMDB에서 삭제된 작품)
+export class TmdbRequestError extends Error {
+  constructor(
+    readonly path: string,
+    readonly status: number,
+  ) {
+    super(`TMDB ${path} 요청 실패 (${status})`);
+    this.name = "TmdbRequestError";
+  }
+}
+
 export class TmdbClient {
   constructor(private readonly apiKey: string) {}
 
@@ -62,7 +73,7 @@ export class TmdbClient {
     }
     const res = await globalThis.fetch(url, { cache: "no-store" });
     if (!res.ok) {
-      throw new Error(`TMDB ${path} 요청 실패 (${res.status})`);
+      throw new TmdbRequestError(path, res.status);
     }
     return (await res.json()) as T;
   }
